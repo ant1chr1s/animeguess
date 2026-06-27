@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D0D1A">
+<title>AnimeGuess</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D1A;--card:#13132B;--card2:#1A1A3E;--border:#2a2a5a;--accent:#E040FB;--cyan:#00E5FF;--correct:#1db954;--partial:#e6a817;--wrong:#c0392b;--text:#e8e8f0;--muted:#7777aa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 10%,rgba(224,64,251,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(0,229,255,.06) 0%,transparent 50%)}
+/* SCREENS */
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+/* NAME SCREEN */
+.name-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.name-box{max-width:400px;width:100%;text-align:center}
+.logo{font-family:'Rajdhani',sans-serif;font-size:clamp(2.2rem,8vw,3.5rem);font-weight:700;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{color:var(--muted);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;margin-top:4px;margin-bottom:28px}
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:24px}
+.card-title{color:var(--text);font-weight:600;font-size:1rem;margin-bottom:14px}
+input.name-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:1rem;font-family:'Inter',sans-serif;padding:12px 16px;outline:none;
+  margin-bottom:10px;transition:border-color .2s}
+input.name-inp:focus{border-color:var(--accent)}
+input.name-inp::placeholder{color:var(--muted)}
+.err{color:var(--wrong);font-size:.78rem;margin-bottom:8px}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--accent),var(--cyan));border:none;
+  border-radius:10px;cursor:pointer;padding:12px;color:#000;font-weight:700;
+  font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:1px;transition:opacity .2s}
+.btn-primary:hover{opacity:.85}
+/* LB preview on name screen */
+.lb-preview{margin-top:18px;background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:18px;text-align:left}
+.lb-title{color:var(--cyan);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:1px;margin-bottom:10px}
+.lb-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--card2);font-size:.78rem}
+.lb-row:last-child{border-bottom:none}
+.lb-row .lb-name{font-weight:600}
+.lb-row .lb-stats{color:var(--muted);font-size:.72rem}
+/* GAME SCREEN */
+header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--border);position:relative}
+.header-logo{font-family:'Rajdhani',sans-serif;font-size:clamp(1.5rem,5vw,2.4rem);font-weight:700;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-sub{color:var(--muted);font-size:.68rem;letter-spacing:1px;text-transform:uppercase}
+.header-btns{position:absolute;top:14px;right:10px;display:flex;gap:6px}
+.btn-icon{background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--cyan);
+  padding:6px 10px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;transition:background .2s}
+.btn-icon:hover{background:var(--border)}
+.main{max-width:1200px;margin:0 auto;padding:12px 8px 60px}
+/* STATS BAR */
+.stats-bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;font-size:.73rem;color:var(--muted)}
+.stats-bar .player-name{color:var(--accent);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem}
+/* LEADERBOARD PANEL */
+.lb-panel{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:none}
+.lb-panel.open{display:block}
+.lb-panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lb-panel-title{color:var(--cyan);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:1px}
+.btn-refresh{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:4px 8px}
+.lb-entry{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;
+  border-radius:8px;margin-bottom:4px;border:1px solid transparent;font-size:.8rem}
+.lb-entry.me{background:rgba(224,64,251,.1);border-color:rgba(224,64,251,.3)}
+.lb-entry-left{display:flex;align-items:center;gap:8px}
+.lb-entry-rank{font-size:.95rem}
+.lb-entry-name{font-weight:600;color:var(--text)}
+.lb-entry-name.me{color:var(--accent)}
+.lb-entry-right{display:flex;gap:10px;font-size:.72rem;color:var(--muted)}
+/* LEGEND */
+.legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;font-size:.72rem;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle}
+/* BANNERS */
+.banner{display:none;border-radius:14px;padding:16px 20px;text-align:center;margin-bottom:14px}
+.banner.show{display:block;animation:fadeSlide .5s ease}
+.banner.win{background:linear-gradient(135deg,rgba(29,185,84,.15),rgba(0,229,255,.08));border:1.5px solid var(--correct)}
+.banner.lose{background:linear-gradient(135deg,rgba(192,57,43,.15),rgba(224,64,251,.08));border:1.5px solid var(--wrong)}
+.banner h2{font-family:'Rajdhani',sans-serif;font-size:1.6rem;margin-bottom:4px}
+.banner.win h2{color:var(--correct)}
+.banner.lose h2{color:var(--wrong)}
+.banner p{color:var(--muted);font-size:.84rem}
+.banner .solution{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);margin:8px 0}
+.banner .btn-new{margin-top:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));border:none;
+  border-radius:8px;cursor:pointer;padding:9px 22px;color:#000;font-weight:700;
+  font-family:'Rajdhani',sans-serif;font-size:.95rem;letter-spacing:1px}
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:10px;display:flex;gap:8px}
+.search-inp{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:12px;
+  color:var(--text);font-size:.95rem;font-family:'Inter',sans-serif;padding:12px 16px;
+  outline:none;transition:border-color .2s}
+.search-inp:focus{border-color:var(--accent)}
+.search-inp::placeholder{color:var(--muted)}
+.search-inp:disabled{opacity:.5}
+.btn-guess{background:linear-gradient(135deg,var(--accent),var(--cyan));border:none;border-radius:12px;
+  cursor:pointer;padding:0 18px;color:#000;font-weight:700;font-family:'Rajdhani',sans-serif;
+  font-size:.9rem;letter-spacing:1px;white-space:nowrap;transition:opacity .2s}
+.btn-guess:disabled{opacity:.4;cursor:not-allowed}
+.suggestions{position:absolute;top:calc(100% + 4px);left:0;right:60px;background:var(--card2);
+  border:1.5px solid var(--border);border-radius:12px;z-index:100;max-height:220px;overflow-y:auto;
+  box-shadow:0 8px 32px rgba(0,0,0,.55);display:none}
+.suggestions.open{display:block}
+.sug-item{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:pointer;
+  transition:background .15s;border-bottom:1px solid var(--border)}
+.sug-item:last-child{border-bottom:none}
+.sug-item:hover{background:rgba(224,64,251,.12)}
+.sug-item .sug-emoji{font-size:.95rem}
+.sug-item .sug-name{font-size:.88rem;font-weight:600}
+.sug-item .sug-anime{font-size:.72rem;color:var(--muted)}
+/* CONTROLS ROW */
+.controls-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.counter{font-family:'Rajdhani',sans-serif;font-size:.85rem;color:var(--muted);letter-spacing:1px}
+.counter .cnt{color:var(--accent);font-weight:700}
+.counter .cnt-warn{color:var(--partial)}
+.counter .cnt-danger{color:var(--wrong)}
+.ctrl-btns{display:flex;gap:8px}
+.btn-hint{background:rgba(230,168,23,.12);border:1.5px solid var(--partial);border-radius:8px;
+  cursor:pointer;padding:6px 13px;color:var(--partial);font-weight:600;
+  font-family:'Rajdhani',sans-serif;font-size:.8rem;letter-spacing:.5px;transition:background .2s}
+.btn-hint:hover{background:rgba(230,168,23,.25)}
+.btn-giveup{background:rgba(192,57,43,.1);border:1.5px solid var(--wrong);border-radius:8px;
+  cursor:pointer;padding:6px 13px;color:var(--wrong);font-weight:600;
+  font-family:'Rajdhani',sans-serif;font-size:.8rem;letter-spacing:.5px;transition:background .2s}
+.btn-giveup:hover{background:rgba(192,57,43,.25)}
+/* HINT BOX */
+.hint-box{background:rgba(230,168,23,.08);border:1.5px solid rgba(230,168,23,.3);
+  border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.8rem;display:none}
+.hint-box.show{display:block}
+.hint-label{color:var(--partial);font-family:'Rajdhani',sans-serif;font-weight:700;margin-right:8px}
+.hint-item{margin-right:14px;color:var(--text)}
+.hint-cat{color:var(--muted)}
+/* GRID */
+.grid-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.grid-inner{min-width:970px;width:100%}
+.grid-row{display:grid;grid-template-columns:1.4fr repeat(10,1fr);gap:4px;margin-bottom:4px}
+.col-label{background:var(--card2);border:1px solid var(--border);border-radius:7px;
+  padding:8px 3px;text-align:center;font-family:'Rajdhani',sans-serif;font-size:.6rem;
+  font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell{border-radius:7px;padding:5px 3px;display:flex;align-items:center;justify-content:center;
+  text-align:center;font-size:.62rem;font-weight:600;min-height:58px;border:1.5px solid var(--border);
+  background:var(--card);word-break:break-word;line-height:1.2;hyphens:auto;color:var(--text)}
+.cell.name-cell{justify-content:flex-start;padding-left:8px;font-family:'Rajdhani',sans-serif;
+  font-weight:700;font-size:.72rem;text-align:left;gap:4px}
+.cell.correct{background:var(--correct);border-color:var(--correct);color:#fff}
+.cell.partial{background:var(--partial);border-color:var(--partial);color:#fff}
+.cell.wrong{background:var(--wrong);border-color:var(--wrong);color:#fff}
+.cell.reveal{animation:flipIn .4s ease forwards}
+.empty-state{text-align:center;color:var(--muted);font-size:.82rem;padding:28px;
+  border:1px dashed var(--border);border-radius:12px}
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card2);
+  border:1.5px solid var(--border);border-radius:10px;padding:10px 20px;font-size:.83rem;
+  color:var(--text);z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+/* ANIMATIONS */
+@keyframes flipIn{0%{transform:scaleX(1)}45%{transform:scaleX(0);opacity:.4}100%{transform:scaleX(1);opacity:1}}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--card)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- NAME SCREEN -->
+<div id="nameScreen" class="screen active">
+  <div class="name-screen">
+    <div class="name-box">
+      <div class="logo">Anime<span style="font-weight:400">Guess</span></div>
+      <div class="logo-sub">Multiplayer · Pokédle-Style</div>
+      <div class="card">
+        <div class="card-title">👤 Wer bist du?</div>
+        <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
+        <div id="nameErr" class="err" style="display:none"></div>
+        <button class="btn-primary" onclick="joinGame()">SPIELEN →</button>
+      </div>
+      <div class="lb-preview" id="lbPreview" style="display:none">
+        <div class="lb-title">🏆 LEADERBOARD</div>
+        <div id="lbPreviewRows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <header>
+    <div class="header-logo">Anime<span style="font-weight:400">Guess</span></div>
+    <div class="header-sub">Pokédle-Style · Multiplayer</div>
+    <div class="header-btns">
+      <button class="btn-icon" id="lbBtn" onclick="toggleLb()">🏆</button>
+      <button class="btn-icon" onclick="backToName()" style="color:var(--muted)">↩</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+      <span class="player-name" id="statsName"></span>
+      <span>· 🔥 Streak: <b id="statsStreak" style="color:var(--text)">0</b></span>
+      <span>· Best: <b id="statsBest" style="color:var(--text)">0</b></span>
+      <span>· <b id="statsWins" style="color:var(--correct)">0</b>W / <b id="statsLosses" style="color:var(--wrong)">0</b>L</span>
+    </div>
+
+    <!-- LEADERBOARD PANEL -->
+    <div class="lb-panel" id="lbPanel">
+      <div class="lb-panel-header">
+        <div class="lb-panel-title">🏆 LEADERBOARD</div>
+        <button class="btn-refresh" onclick="loadLb(true)">↻ Aktualisieren</button>
+      </div>
+      <div id="lbRows"><div style="color:var(--muted);text-align:center;font-size:.8rem">Lädt...</div></div>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <span><span class="legend-dot" style="background:var(--correct)"></span>Richtig</span>
+      <span><span class="legend-dot" style="background:var(--partial)"></span>Teilweise richtig</span>
+      <span><span class="legend-dot" style="background:var(--wrong)"></span>Falsch</span>
+    </div>
+
+    <!-- WIN BANNER -->
+    <div class="banner win" id="winBanner">
+      <h2>🎉 Richtig!</h2>
+      <p id="winText"></p>
+      <p id="winStreak" style="margin-top:4px;color:var(--partial)"></p>
+      <button class="btn-new" onclick="newGame()">NEUES SPIEL</button>
+    </div>
+
+    <!-- LOSE BANNER -->
+    <div class="banner lose" id="loseBanner">
+      <h2>💀 Nicht erraten!</h2>
+      <p>Die Lösung war:</p>
+      <div class="solution" id="solutionText"></div>
+      <button class="btn-new" onclick="newGame()">NEUES SPIEL</button>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-wrap">
+      <input id="searchInp" class="search-inp" type="text" placeholder="Charaktername eingeben..." autocomplete="off"
+        oninput="onSearch()" onkeydown="if(event.key==='Enter')submitGuess()">
+      <button id="guessBtn" class="btn-guess" onclick="submitGuess()">RATEN</button>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-row">
+      <div class="counter">
+        Versuch <span class="cnt" id="cntNum">0</span> / 40
+        <span id="cntLeft" style="margin-left:8px"></span>
+      </div>
+      <div class="ctrl-btns">
+        <button class="btn-hint" id="hintBtn" style="display:none" onclick="useHint()">💡 TIPP</button>
+        <button class="btn-giveup" id="giveUpBtn" style="display:none" onclick="giveUp()">⚑ AUFGEBEN</button>
+      </div>
+    </div>
+
+    <!-- HINT BOX -->
+    <div class="hint-box" id="hintBox">
+      <span class="hint-label">💡 TIPPS:</span>
+      <span id="hintContent"></span>
+    </div>
+
+    <!-- GRID -->
+    <div class="grid-scroll">
+      <div class="grid-inner">
+        <div class="grid-row" id="gridHeader">
+          <div class="col-label">Charakter</div>
+          <div class="col-label">Anime</div>
+          <div class="col-label">Genre</div>
+          <div class="col-label">Geschlecht</div>
+          <div class="col-label">Größe</div>
+          <div class="col-label">Rasse</div>
+          <div class="col-label">Fraktion</div>
+          <div class="col-label">Rang</div>
+          <div class="col-label">Fähigkeit</div>
+          <div class="col-label">Haarfarbe</div>
+          <div class="col-label">Status</div>
+        </div>
+        <div id="guessGrid"></div>
+        <div class="empty-state" id="emptyState">Tippe einen Charakternamen ein und rate! Du hast 40 Versuche.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const GITHUB_TOKEN = ['ghp_g0Fu1qazXgsLP4I','tjJraR3KS9XeHe51f5BLL'].join('');
+const GITHUB_REPO  = 'ant1chr1s/animeguess';
+const LB_FILE      = 'leaderboard.json';
+const MAX_GUESSES  = 40;
+const HINT_AT      = [10, 25];
+const COL_KEYS     = ['a','g','s','h','ra','f','rk','ab','ha','st'];
+const COL_NAMES    = ['Anime','Genre','Geschlecht','Größe','Rasse','Fraktion','Rang','Fähigkeit','Haarfarbe','Status'];
+
+// ── CHARACTER DATABASE ────────────────────────────────────────────────────────
+const C=[
+{n:"Naruto Uzumaki",e:"🍥",a:"Naruto",g:"Action/Abenteuer",s:"m",h:180,ra:"Mensch/Jinchuriki",f:"Konohagakure",rk:"Hokage",ab:"Rasengan",ha:"Blond",st:"Lebendig"},
+{n:"Sasuke Uchiha",e:"⚡",a:"Naruto",g:"Action/Abenteuer",s:"m",h:182,ra:"Mensch/Uchiha",f:"Konohagakure",rk:"Missing-nin",ab:"Sharingan",ha:"Schwarz",st:"Lebendig"},
+{n:"Sakura Haruno",e:"🌸",a:"Naruto",g:"Action/Abenteuer",s:"f",h:165,ra:"Mensch",f:"Konohagakure",rk:"Jonin",ab:"Heilung",ha:"Pink",st:"Lebendig"},
+{n:"Kakashi Hatake",e:"📖",a:"Naruto",g:"Action/Abenteuer",s:"m",h:181,ra:"Mensch",f:"Konohagakure",rk:"Kage",ab:"Chidori",ha:"Silber",st:"Lebendig"},
+{n:"Itachi Uchiha",e:"🦅",a:"Naruto",g:"Action/Abenteuer",s:"m",h:175,ra:"Mensch/Uchiha",f:"Akatsuki",rk:"S-Rang",ab:"Amaterasu",ha:"Schwarz",st:"Tot"},
+{n:"Gaara",e:"🏜️",a:"Naruto",g:"Action/Abenteuer",s:"m",h:166,ra:"Mensch/Jinchuriki",f:"Sunagakure",rk:"Kage",ab:"Sand-Jutsu",ha:"Rot",st:"Lebendig"},
+{n:"Rock Lee",e:"🥋",a:"Naruto",g:"Action/Abenteuer",s:"m",h:172,ra:"Mensch",f:"Konohagakure",rk:"Jonin",ab:"Lotusblüte",ha:"Schwarz",st:"Lebendig"},
+{n:"Hinata Hyuga",e:"👁️",a:"Naruto",g:"Action/Abenteuer",s:"f",h:163,ra:"Mensch",f:"Konohagakure",rk:"Chunin",ab:"Byakugan",ha:"Schwarz",st:"Lebendig"},
+{n:"Madara Uchiha",e:"🌀",a:"Naruto",g:"Action/Abenteuer",s:"m",h:179,ra:"Mensch/Uchiha",f:"Akatsuki",rk:"Legende",ab:"Rinnegan",ha:"Schwarz",st:"Tot"},
+{n:"Jiraiya",e:"🐸",a:"Naruto",g:"Action/Abenteuer",s:"m",h:191,ra:"Mensch",f:"Konohagakure",rk:"Sannin",ab:"Rasengan",ha:"Weiß",st:"Tot"},
+{n:"Tsunade",e:"💊",a:"Naruto",g:"Action/Abenteuer",s:"f",h:163,ra:"Mensch",f:"Konohagakure",rk:"Kage",ab:"Heilung",ha:"Blond",st:"Lebendig"},
+{n:"Orochimaru",e:"🐍",a:"Naruto",g:"Action/Abenteuer",s:"m",h:179,ra:"Mensch",f:"Akatsuki",rk:"Sannin",ab:"Verbotene Jutsu",ha:"Schwarz",st:"Lebendig"},
+{n:"Minato Namikaze",e:"⚡",a:"Naruto",g:"Action/Abenteuer",s:"m",h:179,ra:"Mensch",f:"Konohagakure",rk:"Kage",ab:"Rasengan",ha:"Blond",st:"Tot"},
+{n:"Shikamaru Nara",e:"☁️",a:"Naruto",g:"Action/Abenteuer",s:"m",h:170,ra:"Mensch",f:"Konohagakure",rk:"Jonin",ab:"Schattenimitation",ha:"Schwarz",st:"Lebendig"},
+{n:"Pain (Nagato)",e:"🔮",a:"Naruto",g:"Action/Abenteuer",s:"m",h:176,ra:"Mensch",f:"Akatsuki",rk:"Anführer",ab:"Rinnegan",ha:"Orange",st:"Tot"},
+{n:"Obito Uchiha",e:"🌙",a:"Naruto",g:"Action/Abenteuer",s:"m",h:182,ra:"Mensch/Uchiha",f:"Akatsuki",rk:"S-Rang",ab:"Kamui",ha:"Schwarz",st:"Tot"},
+{n:"Deidara",e:"💣",a:"Naruto",g:"Action/Abenteuer",s:"m",h:166,ra:"Mensch",f:"Akatsuki",rk:"S-Rang",ab:"Explosionskunst",ha:"Blond",st:"Tot"},
+{n:"Kisame Hoshigaki",e:"🦈",a:"Naruto",g:"Action/Abenteuer",s:"m",h:195,ra:"Mensch",f:"Akatsuki",rk:"S-Rang",ab:"Samehada",ha:"Keine",st:"Tot"},
+{n:"Monkey D. Luffy",e:"⛵",a:"One Piece",g:"Action/Abenteuer",s:"m",h:174,ra:"Mensch",f:"Strohhut-Piraten",rk:"Kapitän",ab:"Gum-Gum-Frucht",ha:"Schwarz",st:"Lebendig"},
+{n:"Roronoa Zoro",e:"⚔️",a:"One Piece",g:"Action/Abenteuer",s:"m",h:181,ra:"Mensch",f:"Strohhut-Piraten",rk:"Erster Offizier",ab:"Santoryu",ha:"Grün",st:"Lebendig"},
+{n:"Nami",e:"🗺️",a:"One Piece",g:"Action/Abenteuer",s:"f",h:170,ra:"Mensch",f:"Strohhut-Piraten",rk:"Navigatorin",ab:"Klima-Takt",ha:"Orange",st:"Lebendig"},
+{n:"Sanji Vinsmoke",e:"🔥",a:"One Piece",g:"Action/Abenteuer",s:"m",h:180,ra:"Mensch",f:"Strohhut-Piraten",rk:"Koch",ab:"Flambe Shot",ha:"Blond",st:"Lebendig"},
+{n:"Nico Robin",e:"📜",a:"One Piece",g:"Action/Abenteuer",s:"f",h:188,ra:"Mensch",f:"Strohhut-Piraten",rk:"Archäologin",ab:"Blüten-Blüten",ha:"Schwarz",st:"Lebendig"},
+{n:"Shanks",e:"⚓",a:"One Piece",g:"Action/Abenteuer",s:"m",h:199,ra:"Mensch",f:"Rothaar-Piraten",rk:"Yonko",ab:"Haki",ha:"Rot",st:"Lebendig"},
+{n:"Boa Hancock",e:"🐍",a:"One Piece",g:"Action/Abenteuer",s:"f",h:191,ra:"Mensch",f:"Amazonia",rk:"Warlord",ab:"Mero Mero",ha:"Schwarz",st:"Lebendig"},
+{n:"Trafalgar Law",e:"💉",a:"One Piece",g:"Action/Abenteuer",s:"m",h:191,ra:"Mensch",f:"Heart-Piraten",rk:"Kapitän",ab:"Op-Op-Frucht",ha:"Schwarz",st:"Lebendig"},
+{n:"Portgas D. Ace",e:"🔥",a:"One Piece",g:"Action/Abenteuer",s:"m",h:185,ra:"Mensch",f:"Whitebeard-Piraten",rk:"Divisionskommandant",ab:"Feuer-Frucht",ha:"Schwarz",st:"Tot"},
+{n:"Whitebeard",e:"🌊",a:"One Piece",g:"Action/Abenteuer",s:"m",h:666,ra:"Mensch",f:"Whitebeard-Piraten",rk:"Yonko",ab:"Erschütterungsfrucht",ha:"Weiß",st:"Tot"},
+{n:"Dracule Mihawk",e:"🗡️",a:"One Piece",g:"Action/Abenteuer",s:"m",h:198,ra:"Mensch",f:"Warlords",rk:"Weltbeste Klinge",ab:"Yoru",ha:"Schwarz",st:"Lebendig"},
+{n:"Brook",e:"💀",a:"One Piece",g:"Action/Abenteuer",s:"m",h:277,ra:"Skelett",f:"Strohhut-Piraten",rk:"Musiker",ab:"Seelen-Frucht",ha:"Keine",st:"Lebendig"},
+{n:"Jinbe",e:"🦈",a:"One Piece",g:"Action/Abenteuer",s:"m",h:301,ra:"Fischmensch",f:"Strohhut-Piraten",rk:"Steuermann",ab:"Meeres-Kampfkunst",ha:"Keine",st:"Lebendig"},
+{n:"Crocodile",e:"🪝",a:"One Piece",g:"Action/Abenteuer",s:"m",h:253,ra:"Mensch",f:"Baroque Works",rk:"Warlord",ab:"Sand-Sand-Frucht",ha:"Schwarz",st:"Lebendig"},
+{n:"Donquixote Doflamingo",e:"🕶️",a:"One Piece",g:"Action/Abenteuer",s:"m",h:305,ra:"Mensch",f:"Donquixote-Piraten",rk:"Warlord",ab:"Faden-Frucht",ha:"Blond",st:"Lebendig"},
+{n:"Kaido",e:"🐉",a:"One Piece",g:"Action/Abenteuer",s:"m",h:710,ra:"Mensch",f:"Tiere-Piraten",rk:"Yonko",ab:"Drachen-Frucht",ha:"Schwarz",st:"Lebendig"},
+{n:"Goku",e:"🔵",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:175,ra:"Saiyajin",f:"Erdverteidiger",rk:"Super Saiyajin",ab:"Kamehameha",ha:"Schwarz",st:"Lebendig"},
+{n:"Vegeta",e:"👑",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:165,ra:"Saiyajin",f:"Erdverteidiger",rk:"Saiyajin-Prinz",ab:"Final Flash",ha:"Schwarz",st:"Lebendig"},
+{n:"Gohan",e:"📚",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:176,ra:"Saiyajin/Halbmensch",f:"Erdverteidiger",rk:"Krieger",ab:"Masenkō",ha:"Schwarz",st:"Lebendig"},
+{n:"Piccolo",e:"💚",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:226,ra:"Namekianer",f:"Erdverteidiger",rk:"Ältester",ab:"Makankosappo",ha:"Keine",st:"Lebendig"},
+{n:"Frieza",e:"💜",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:153,ra:"Mutant",f:"Frieza-Armee",rk:"Kaiser",ab:"Death Beam",ha:"Keine",st:"Lebendig"},
+{n:"Cell",e:"🧬",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:200,ra:"Bioroboter",f:"Dr. Geros Kreation",rk:"Perfektes Wesen",ab:"Kamehameha",ha:"Keine",st:"Tot"},
+{n:"Majin Buu",e:"🍬",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:256,ra:"Magier-Kreatur",f:"Babidis Dienst",rk:"Unbeherrschbar",ab:"Verwandlung",ha:"Keine",st:"Lebendig"},
+{n:"Trunks",e:"⚔️",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:170,ra:"Saiyajin/Halbmensch",f:"Erdverteidiger",rk:"Super Saiyajin",ab:"Schwert",ha:"Lila",st:"Lebendig"},
+{n:"Android 18",e:"💛",a:"Dragon Ball Z",g:"Action/Kampf",s:"f",h:165,ra:"Androide",f:"Erdverteidiger",rk:"Kriegerin",ab:"Energiestrahlen",ha:"Blond",st:"Lebendig"},
+{n:"Broly",e:"💪",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:198,ra:"Saiyajin",f:"Saiyajin-Legende",rk:"Legendärer Super Saiyajin",ab:"Eraser Cannon",ha:"Schwarz",st:"Lebendig"},
+{n:"Beerus",e:"😴",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:195,ra:"Gottheit",f:"Götter",rk:"Gott der Zerstörung",ab:"Hakai",ha:"Keine",st:"Lebendig"},
+{n:"Ichigo Kurosaki",e:"🌙",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:181,ra:"Mensch/Shinigami",f:"Gotei 13",rk:"Ersatzshinigami",ab:"Getsuga Tenshō",ha:"Orange",st:"Lebendig"},
+{n:"Rukia Kuchiki",e:"❄️",a:"Bleach",g:"Action/Übernatürlich",s:"f",h:144,ra:"Shinigami",f:"Gotei 13",rk:"Taicho",ab:"Sode no Shirayuki",ha:"Schwarz",st:"Lebendig"},
+{n:"Byakuya Kuchiki",e:"🌸",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:181,ra:"Shinigami",f:"Gotei 13",rk:"Taicho",ab:"Senbonzakura",ha:"Schwarz",st:"Lebendig"},
+{n:"Tōshirō Hitsugaya",e:"❄️",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:133,ra:"Shinigami",f:"Gotei 13",rk:"Taicho",ab:"Hyōrinmaru",ha:"Weiß",st:"Lebendig"},
+{n:"Sōsuke Aizen",e:"🦋",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:186,ra:"Shinigami/Hollow",f:"Arrancar-Armee",rk:"Anführer",ab:"Kyōka Suigetsu",ha:"Braun",st:"Lebendig"},
+{n:"Kisuke Urahara",e:"🎩",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:183,ra:"Shinigami",f:"Urahara Shop",rk:"Ehemaliger Taicho",ab:"Benihime",ha:"Blond",st:"Lebendig"},
+{n:"Ulquiorra Cifer",e:"🖤",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:169,ra:"Arrancar",f:"Espada",rk:"Cuatro Espada",ab:"Lanza del Relámpago",ha:"Schwarz",st:"Tot"},
+{n:"Grimmjow Jaegerjaquez",e:"🐆",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:186,ra:"Arrancar",f:"Espada",rk:"Sexta Espada",ab:"Pantera",ha:"Blau",st:"Lebendig"},
+{n:"Kenpachi Zaraki",e:"⚔️",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:202,ra:"Shinigami",f:"Gotei 13",rk:"Taicho",ab:"Nozarashi",ha:"Schwarz",st:"Lebendig"},
+{n:"Starrk",e:"🐺",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:182,ra:"Arrancar",f:"Espada",rk:"Primera Espada",ab:"Ceros Lobos",ha:"Braun",st:"Tot"},
+{n:"Baraggan Louisenbairn",e:"💀",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:175,ra:"Arrancar",f:"Espada",rk:"Segunda Espada",ab:"Arrogante",ha:"Keine",st:"Tot"},
+{n:"Halibel",e:"🦈",a:"Bleach",g:"Action/Übernatürlich",s:"f",h:175,ra:"Arrancar",f:"Espada",rk:"Tres Espada",ab:"Tiburón",ha:"Blond",st:"Lebendig"},
+{n:"Yhwach",e:"👁️",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:182,ra:"Quincy",f:"Vandenreich",rk:"Quincy-König",ab:"Almighty",ha:"Schwarz",st:"Tot"},
+{n:"Jugram Haschwalth",e:"⚖️",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:186,ra:"Quincy",f:"Stern-Ritter",rk:"Großmarschall",ab:"The Balance",ha:"Blond",st:"Tot"},
+{n:"Levi Ackerman",e:"⚔️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:160,ra:"Mensch/Ackermann",f:"Aufklärungstrupp",rk:"Hauptmann",ab:"ODM-Gerät",ha:"Schwarz",st:"Lebendig"},
+{n:"Eren Jäger",e:"🗡️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:183,ra:"Mensch/Titan",f:"Rumbling",rk:"Angreifender Titan",ab:"Titanverwandlung",ha:"Braun",st:"Tot"},
+{n:"Mikasa Ackerman",e:"🧣",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"f",h:170,ra:"Mensch/Ackermann",f:"Aufklärungstrupp",rk:"Soldatin",ab:"Akermann-Kraft",ha:"Schwarz",st:"Lebendig"},
+{n:"Armin Arlert",e:"💡",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:163,ra:"Mensch/Titan",f:"Aufklärungstrupp",rk:"Oberbefehlshaber",ab:"Kolossaltitan",ha:"Blond",st:"Lebendig"},
+{n:"Erwin Smith",e:"🎖️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:188,ra:"Mensch",f:"Aufklärungstrupp",rk:"Kommandeur",ab:"Strategie",ha:"Blond",st:"Tot"},
+{n:"Reiner Braun",e:"🛡️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:188,ra:"Mensch/Titan",f:"Krieger",rk:"Krieger",ab:"Panzertitan",ha:"Blond",st:"Lebendig"},
+{n:"Annie Leonhardt",e:"❄️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"f",h:153,ra:"Mensch/Titan",f:"Krieger",rk:"Kriegerin",ab:"Weiblicher Titan",ha:"Blond",st:"Lebendig"},
+{n:"Zeke Jäger",e:"🐒",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:183,ra:"Mensch/Titan",f:"Marley",rk:"Krieger-Anführer",ab:"Tiertitan",ha:"Blond",st:"Tot"},
+{n:"Sasha Braus",e:"🍖",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"f",h:168,ra:"Mensch",f:"Aufklärungstrupp",rk:"Soldatin",ab:"Bogenschießen",ha:"Braun",st:"Tot"},
+{n:"Killua Zoldyck",e:"⚡",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:158,ra:"Mensch",f:"Zoldyck-Familie",rk:"Assassin",ab:"Godspeed",ha:"Weiß",st:"Lebendig"},
+{n:"Gon Freecss",e:"🎣",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:154,ra:"Mensch",f:"Hunter-Vereinigung",rk:"Hunter",ab:"Jajanken",ha:"Schwarz",st:"Lebendig"},
+{n:"Hisoka Morow",e:"🃏",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:187,ra:"Mensch",f:"Phantom-Truppe",rk:"Mitglied",ab:"Bungee Gum",ha:"Rot",st:"Lebendig"},
+{n:"Meruem",e:"👁️",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:160,ra:"Chimera Ant",f:"Chimera-Ameisen",rk:"König",ab:"Nen-Absorption",ha:"Keine",st:"Tot"},
+{n:"Kurapika",e:"⛓️",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:171,ra:"Mensch",f:"Zodiacs",rk:"Hunter",ab:"Scarlet-Kette",ha:"Blond",st:"Lebendig"},
+{n:"Chrollo Lucilfer",e:"📖",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:177,ra:"Mensch",f:"Phantom-Truppe",rk:"Anführer",ab:"Diebstahl-Nen",ha:"Schwarz",st:"Lebendig"},
+{n:"Netero",e:"🙏",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:160,ra:"Mensch",f:"Hunter-Vereinigung",rk:"Vorsitzender",ab:"100-Typ Guanyin",ha:"Weiß",st:"Tot"},
+{n:"Tanjiro Kamado",e:"🌊",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:165,ra:"Mensch",f:"Dämonentöter-Korps",rk:"Schüler",ab:"Wasser-Atmung",ha:"Schwarz",st:"Lebendig"},
+{n:"Nezuko Kamado",e:"🎋",a:"Demon Slayer",g:"Action/Übernatürlich",s:"f",h:153,ra:"Dämon",f:"Kamado-Familie",rk:"Dämon",ab:"Blutdämon-Kunst",ha:"Schwarz",st:"Lebendig"},
+{n:"Zenitsu Agatsuma",e:"⚡",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:164,ra:"Mensch",f:"Dämonentöter-Korps",rk:"Schüler",ab:"Donner-Atmung",ha:"Blond",st:"Lebendig"},
+{n:"Inosuke Hashibira",e:"🐗",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:164,ra:"Mensch",f:"Dämonentöter-Korps",rk:"Schüler",ab:"Bestien-Atmung",ha:"Schwarz",st:"Lebendig"},
+{n:"Giyu Tomioka",e:"🌊",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:176,ra:"Mensch",f:"Hashira",rk:"Wasser-Hashira",ab:"Wasser-Atmung",ha:"Schwarz",st:"Lebendig"},
+{n:"Shinobu Kocho",e:"🦋",a:"Demon Slayer",g:"Action/Übernatürlich",s:"f",h:151,ra:"Mensch",f:"Hashira",rk:"Insekten-Hashira",ab:"Insekten-Atmung",ha:"Schwarz",st:"Tot"},
+{n:"Kyojuro Rengoku",e:"🔥",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:177,ra:"Mensch",f:"Hashira",rk:"Flammen-Hashira",ab:"Flammen-Atmung",ha:"Blond",st:"Tot"},
+{n:"Tengen Uzui",e:"💎",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:198,ra:"Mensch",f:"Hashira",rk:"Klang-Hashira",ab:"Klang-Atmung",ha:"Weiß",st:"Lebendig"},
+{n:"Muzan Kibutsuji",e:"🌙",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:179,ra:"Dämon",f:"Zwölf Kizuki",rk:"Obermondkönig",ab:"Blutkörper-Beherrschung",ha:"Schwarz",st:"Tot"},
+{n:"Akaza",e:"🔴",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:173,ra:"Dämon",f:"Zwölf Kizuki",rk:"Obermond 3",ab:"Destruktiver Treffer",ha:"Rosa",st:"Tot"},
+{n:"Doma",e:"❄️",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:187,ra:"Dämon",f:"Zwölf Kizuki",rk:"Obermond 2",ab:"Eis-Technik",ha:"Blond",st:"Tot"},
+{n:"Kokushibo",e:"🌙",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:190,ra:"Dämon",f:"Zwölf Kizuki",rk:"Obermond 1",ab:"Mondatmung",ha:"Schwarz",st:"Tot"},
+{n:"Yoriichi Tsugikuni",e:"🌅",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:190,ra:"Mensch",f:"Dämonentöter-Korps",rk:"Legende",ab:"Sonnenatmung",ha:"Schwarz",st:"Tot"},
+{n:"Mitsuri Kanroji",e:"💕",a:"Demon Slayer",g:"Action/Übernatürlich",s:"f",h:167,ra:"Mensch",f:"Hashira",rk:"Liebes-Hashira",ab:"Liebes-Atmung",ha:"Pink",st:"Lebendig"},
+{n:"Sanemi Shinazugawa",e:"🌪️",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:179,ra:"Mensch",f:"Hashira",rk:"Wind-Hashira",ab:"Wind-Atmung",ha:"Weiß",st:"Lebendig"},
+{n:"Gyomei Himejima",e:"⛓️",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:220,ra:"Mensch",f:"Hashira",rk:"Stein-Hashira",ab:"Stein-Atmung",ha:"Keine",st:"Tot"},
+{n:"Enmu",e:"🌙",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:174,ra:"Dämon",f:"Zwölf Kizuki",rk:"Untermond 1",ab:"Schlaf-Träume",ha:"Schwarz",st:"Tot"},
+{n:"Rui",e:"🕸️",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:152,ra:"Dämon",f:"Zwölf Kizuki",rk:"Untermond 5",ab:"Blut-Fäden",ha:"Weiß",st:"Tot"},
+{n:"Deku (Izuku M.)",e:"💚",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:166,ra:"Mensch",f:"UA-Heldenschule",rk:"Pro-Held",ab:"One For All",ha:"Grün",st:"Lebendig"},
+{n:"Katsuki Bakugo",e:"💥",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:172,ra:"Mensch",f:"UA-Heldenschule",rk:"Pro-Held",ab:"Explosion",ha:"Blond",st:"Lebendig"},
+{n:"Shoto Todoroki",e:"🧊",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:176,ra:"Mensch",f:"UA-Heldenschule",rk:"Pro-Held",ab:"Eis und Feuer",ha:"Zweifarbig",st:"Lebendig"},
+{n:"All Might",e:"💪",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:220,ra:"Mensch",f:"UA-Heldenschule",rk:"Nummer-1-Held",ab:"One For All",ha:"Blond",st:"Lebendig"},
+{n:"Aizawa Shouta",e:"👁️",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:183,ra:"Mensch",f:"UA-Heldenschule",rk:"Lehrer",ab:"Löschung",ha:"Schwarz",st:"Lebendig"},
+{n:"Hawks",e:"🦅",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:172,ra:"Mensch",f:"Helden-Kommission",rk:"Nummer-2-Held",ab:"Fierce Wings",ha:"Blond",st:"Lebendig"},
+{n:"Endeavor",e:"🔥",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:195,ra:"Mensch",f:"Helden-Kommission",rk:"Nummer-1-Held",ab:"Hellflame",ha:"Rot",st:"Lebendig"},
+{n:"Tomura Shigaraki",e:"💀",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:175,ra:"Mensch",f:"Liga der Schurken",rk:"Anführer",ab:"Zerfall",ha:"Blau",st:"Lebendig"},
+{n:"Toga Himiko",e:"🩸",a:"My Hero Academia",g:"Action/Superhelden",s:"f",h:157,ra:"Mensch",f:"Liga der Schurken",rk:"Mitglied",ab:"Verwandlung",ha:"Blond",st:"Lebendig"},
+{n:"Dabi",e:"🔵",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:176,ra:"Mensch",f:"Liga der Schurken",rk:"Mitglied",ab:"Blaue Flammen",ha:"Schwarz",st:"Lebendig"},
+{n:"Edward Elric",e:"⚗️",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:165,ra:"Mensch",f:"Staatliche Alchemisten",rk:"Staatlicher Alchemist",ab:"Alchimie",ha:"Blond",st:"Lebendig"},
+{n:"Roy Mustang",e:"🔥",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:175,ra:"Mensch",f:"Staatliche Alchemisten",rk:"Oberst",ab:"Feuer-Alchimie",ha:"Schwarz",st:"Lebendig"},
+{n:"Scar",e:"❌",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:185,ra:"Ishvalan",f:"Ishval",rk:"Vigilant",ab:"Destruktions-Alchimie",ha:"Schwarz",st:"Lebendig"},
+{n:"Greed",e:"💎",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:180,ra:"Homunkulus",f:"Sieben Homunkuli",rk:"Homunkulus",ab:"Ultimativer Schild",ha:"Schwarz",st:"Tot"},
+{n:"Lust",e:"💋",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"f",h:165,ra:"Homunkulus",f:"Sieben Homunkuli",rk:"Homunkulus",ab:"Speer der Lust",ha:"Schwarz",st:"Tot"},
+{n:"Father",e:"⭕",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:175,ra:"Homunkulus",f:"Sieben Homunkuli",rk:"Gott",ab:"Gottheit",ha:"Blond",st:"Tot"},
+{n:"Light Yagami",e:"📓",a:"Death Note",g:"Thriller/Psycho",s:"m",h:179,ra:"Mensch",f:"Kira",rk:"Gott der neuen Welt",ab:"Death Note",ha:"Braun",st:"Tot"},
+{n:"L Lawliet",e:"🍰",a:"Death Note",g:"Thriller/Psycho",s:"m",h:179,ra:"Mensch",f:"Verbrechensbekämpfung",rk:"Weltoberster Detektiv",ab:"Deduktion",ha:"Schwarz",st:"Tot"},
+{n:"Ryuk",e:"🍎",a:"Death Note",g:"Thriller/Psycho",s:"m",h:230,ra:"Shinigami",f:"Shinigami-Reich",rk:"Shinigami",ab:"Shinigami",ha:"Schwarz",st:"Lebendig"},
+{n:"Misa Amane",e:"✂️",a:"Death Note",g:"Thriller/Psycho",s:"f",h:152,ra:"Mensch",f:"Kira",rk:"Kiras Anhängerin",ab:"Shinigami-Augen",ha:"Blond",st:"Tot"},
+{n:"Near",e:"🎲",a:"Death Note",g:"Thriller/Psycho",s:"m",h:152,ra:"Mensch",f:"SPK",rk:"Detektiv",ab:"Deduktion",ha:"Weiß",st:"Lebendig"},
+{n:"Shoyo Hinata",e:"🏐",a:"Haikyuu",g:"Sport/Drama",s:"m",h:162,ra:"Mensch",f:"Karasuno",rk:"Außenangreifer",ab:"Schnellangriff",ha:"Orange",st:"Lebendig"},
+{n:"Tobio Kageyama",e:"👑",a:"Haikyuu",g:"Sport/Drama",s:"m",h:180,ra:"Mensch",f:"Karasuno",rk:"Zuspieler",ab:"Königlicher Satz",ha:"Schwarz",st:"Lebendig"},
+{n:"Kei Tsukishima",e:"🦕",a:"Haikyuu",g:"Sport/Drama",s:"m",h:188,ra:"Mensch",f:"Karasuno",rk:"Mittelblocker",ab:"Block",ha:"Blond",st:"Lebendig"},
+{n:"Daichi Sawamura",e:"🛡️",a:"Haikyuu",g:"Sport/Drama",s:"m",h:176,ra:"Mensch",f:"Karasuno",rk:"Kapitän",ab:"Empfang",ha:"Schwarz",st:"Lebendig"},
+{n:"Yu Nishinoya",e:"⚡",a:"Haikyuu",g:"Sport/Drama",s:"m",h:159,ra:"Mensch",f:"Karasuno",rk:"Libero",ab:"Rolling Thunder",ha:"Schwarz",st:"Lebendig"},
+{n:"Keiji Akaashi",e:"🌙",a:"Haikyuu",g:"Sport/Drama",s:"m",h:182,ra:"Mensch",f:"Fukurodani",rk:"Vize-Kapitän",ab:"Satz",ha:"Schwarz",st:"Lebendig"},
+{n:"Kōtarō Bokuto",e:"🦉",a:"Haikyuu",g:"Sport/Drama",s:"m",h:185,ra:"Mensch",f:"Fukurodani",rk:"Kapitän",ab:"Spike",ha:"Grau",st:"Lebendig"},
+{n:"Tetsurō Kuroo",e:"🐓",a:"Haikyuu",g:"Sport/Drama",s:"m",h:187,ra:"Mensch",f:"Nekoma",rk:"Kapitän",ab:"Block",ha:"Schwarz",st:"Lebendig"},
+{n:"Kenma Kozume",e:"🎮",a:"Haikyuu",g:"Sport/Drama",s:"m",h:169,ra:"Mensch",f:"Nekoma",rk:"Zuspieler",ab:"Spielmacher",ha:"Blond",st:"Lebendig"},
+{n:"Wakatoshi Ushijima",e:"💚",a:"Haikyuu",g:"Sport/Drama",s:"m",h:189,ra:"Mensch",f:"Shiratorizawa",rk:"Kapitän",ab:"Linksangriff",ha:"Grün",st:"Lebendig"},
+{n:"Satori Tendo",e:"🖖",a:"Haikyuu",g:"Sport/Drama",s:"m",h:187,ra:"Mensch",f:"Shiratorizawa",rk:"Mittelblocker",ab:"Guess-Block",ha:"Rot",st:"Lebendig"},
+{n:"Tooru Oikawa",e:"🌟",a:"Haikyuu",g:"Sport/Drama",s:"m",h:184,ra:"Mensch",f:"Aoba Josai",rk:"Kapitän",ab:"Jump-Aufschlag",ha:"Braun",st:"Lebendig"},
+{n:"Iwaizumi Hajime",e:"💢",a:"Haikyuu",g:"Sport/Drama",s:"m",h:180,ra:"Mensch",f:"Aoba Josai",rk:"Vize-Kapitän",ab:"Angriff",ha:"Schwarz",st:"Lebendig"},
+{n:"Tetsuya Kuroko",e:"👻",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:168,ra:"Mensch",f:"Seirin",rk:"Aufbauspieler",ab:"Phantom-Dribbling",ha:"Blau",st:"Lebendig"},
+{n:"Taiga Kagami",e:"🔥",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:190,ra:"Mensch",f:"Seirin",rk:"Stürmer",ab:"Dunking",ha:"Rot",st:"Lebendig"},
+{n:"Daiki Aomine",e:"💙",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:192,ra:"Mensch",f:"Too",rk:"Stürmer",ab:"Formloser Stil",ha:"Blau",st:"Lebendig"},
+{n:"Seijuro Akashi",e:"⚡",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:173,ra:"Mensch",f:"Rakuzan",rk:"Kapitän",ab:"Emperor Eye",ha:"Rot",st:"Lebendig"},
+{n:"Atsushi Murasakibara",e:"💜",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:208,ra:"Mensch",f:"Yosen",rk:"Center",ab:"Blocken",ha:"Lila",st:"Lebendig"},
+{n:"Yoichi Isagi",e:"⚽",a:"Blue Lock",g:"Sport/Drama",s:"m",h:173,ra:"Mensch",f:"Blue Lock Team Z",rk:"Stürmer",ab:"Meta-Vision",ha:"Schwarz",st:"Lebendig"},
+{n:"Meguru Bachira",e:"🫧",a:"Blue Lock",g:"Sport/Drama",s:"m",h:172,ra:"Mensch",f:"Blue Lock Team Z",rk:"Stürmer",ab:"Dribbling",ha:"Braun",st:"Lebendig"},
+{n:"Seishiro Nagi",e:"😴",a:"Blue Lock",g:"Sport/Drama",s:"m",h:184,ra:"Mensch",f:"Blue Lock Team V",rk:"Stürmer",ab:"Ballkontrolle",ha:"Grau",st:"Lebendig"},
+{n:"Rin Itoshi",e:"🧊",a:"Blue Lock",g:"Sport/Drama",s:"m",h:178,ra:"Mensch",f:"Blue Lock Top 5",rk:"Stürmer",ab:"Doppelschuss",ha:"Blau",st:"Lebendig"},
+{n:"Sae Itoshi",e:"⚽",a:"Blue Lock",g:"Sport/Drama",s:"m",h:175,ra:"Mensch",f:"Nationalmannschaft",rk:"Profi",ab:"Vision",ha:"Rosa",st:"Lebendig"},
+{n:"Denji",e:"⛓️",a:"Chainsaw Man",g:"Action/Horror",s:"m",h:173,ra:"Teufelshybrid",f:"Öffentliche Sicherheit",rk:"Teufelsjäger",ab:"Kettensägen-Teufel",ha:"Blond",st:"Lebendig"},
+{n:"Power",e:"🩸",a:"Chainsaw Man",g:"Action/Horror",s:"f",h:164,ra:"Teufelshybrid",f:"Öffentliche Sicherheit",rk:"Teufelsjäger",ab:"Blut-Teufel",ha:"Rosa",st:"Tot"},
+{n:"Makima",e:"🐕",a:"Chainsaw Man",g:"Action/Horror",s:"f",h:169,ra:"Teufel",f:"Öffentliche Sicherheit",rk:"Leiterin",ab:"Kontroll-Teufel",ha:"Braun",st:"Tot"},
+{n:"Aki Hayakawa",e:"🗡️",a:"Chainsaw Man",g:"Action/Horror",s:"m",h:181,ra:"Mensch",f:"Öffentliche Sicherheit",rk:"Senior-Jäger",ab:"Zukünftiger Teufel",ha:"Schwarz",st:"Tot"},
+{n:"Akame",e:"⚔️",a:"Akame ga Kill",g:"Action/Dark Fantasy",s:"f",h:160,ra:"Mensch",f:"Night Raid",rk:"Assassin",ab:"Murasame",ha:"Schwarz",st:"Lebendig"},
+{n:"Tatsumi",e:"🛡️",a:"Akame ga Kill",g:"Action/Dark Fantasy",s:"m",h:170,ra:"Mensch",f:"Night Raid",rk:"Assassin",ab:"Incursio",ha:"Braun",st:"Lebendig"},
+{n:"Esdeath",e:"❄️",a:"Akame ga Kill",g:"Action/Dark Fantasy",s:"f",h:167,ra:"Mensch",f:"Kaiserliche Armee",rk:"Generalin",ab:"Eis-Manipulation",ha:"Blau",st:"Tot"},
+{n:"Shinra Kusakabe",e:"🔥",a:"Fire Force",g:"Action/Übernatürlich",s:"m",h:173,ra:"Mensch/3. Generation",f:"Kompanie 8",rk:"Feuerwehrmann",ab:"Feuer-Karate",ha:"Schwarz",st:"Lebendig"},
+{n:"Arthur Boyle",e:"⚔️",a:"Fire Force",g:"Action/Übernatürlich",s:"m",h:175,ra:"Mensch/3. Generation",f:"Kompanie 8",rk:"Feuerwehrmann",ab:"Excalibur",ha:"Blond",st:"Lebendig"},
+{n:"Maka Albarn",e:"📚",a:"Soul Eater",g:"Action/Fantasy",s:"f",h:155,ra:"Mensch",f:"DWMA",rk:"Meister",ab:"Genie-Wahrnehmung",ha:"Blond",st:"Lebendig"},
+{n:"Soul Evans",e:"🎹",a:"Soul Eater",g:"Action/Fantasy",s:"m",h:167,ra:"Mensch/Waffe",f:"DWMA",rk:"Todeswaffe",ab:"Sense-Verwandlung",ha:"Weiß",st:"Lebendig"},
+{n:"Death the Kid",e:"💀",a:"Soul Eater",g:"Action/Fantasy",s:"m",h:158,ra:"Gottheit",f:"DWMA",rk:"Lorder",ab:"Beelzebub Pistolen",ha:"Schwarz",st:"Lebendig"},
+{n:"Natsu Dragneel",e:"🔥",a:"Fairy Tail",g:"Action/Fantasy",s:"m",h:174,ra:"Mensch/E.N.D.",f:"Fairy Tail",rk:"S-Klasse-Magier",ab:"Feuerdrachen-Schlund",ha:"Rosa",st:"Lebendig"},
+{n:"Lucy Heartfilia",e:"⭐",a:"Fairy Tail",g:"Action/Fantasy",s:"f",h:165,ra:"Mensch",f:"Fairy Tail",rk:"Magierin",ab:"Sternenmagie",ha:"Blond",st:"Lebendig"},
+{n:"Erza Scarlet",e:"⚔️",a:"Fairy Tail",g:"Action/Fantasy",s:"f",h:168,ra:"Mensch",f:"Fairy Tail",rk:"S-Klasse-Magierin",ab:"Rüstungswechsel",ha:"Rot",st:"Lebendig"},
+{n:"Zeref Dragneel",e:"🖤",a:"Fairy Tail",g:"Action/Fantasy",s:"m",h:170,ra:"Unsterblich",f:"Alvarez-Reich",rk:"Kaiser",ab:"Schwarze Magie",ha:"Schwarz",st:"Tot"},
+{n:"Frieren",e:"🌿",a:"Frieren",g:"Fantasy/Abenteuer",s:"f",h:155,ra:"Elf",f:"Himmels-Partei",rk:"S-Rang Magier",ab:"Magie-Analyse",ha:"Silber",st:"Lebendig"},
+{n:"Fern",e:"🌸",a:"Frieren",g:"Fantasy/Abenteuer",s:"f",h:162,ra:"Mensch",f:"Frierens Gruppe",rk:"Erste Klasse Magier",ab:"Magie-Geschwindigkeit",ha:"Lila",st:"Lebendig"},
+{n:"Stark",e:"🔥",a:"Frieren",g:"Fantasy/Abenteuer",s:"m",h:177,ra:"Mensch",f:"Frierens Gruppe",rk:"Krieger",ab:"Krieger-Aura",ha:"Braun",st:"Lebendig"},
+{n:"Dio Brando",e:"🧛",a:"JoJo's Biz. Adv.",g:"Action/Horror",s:"m",h:195,ra:"Vampir",f:"Dios Dienst",rk:"Vampirfürst",ab:"The World",ha:"Blond",st:"Tot"},
+{n:"Jotaro Kujo",e:"🌊",a:"JoJo's Biz. Adv.",g:"Action/Horror",s:"m",h:195,ra:"Mensch",f:"Kujo-Familie",rk:"Held",ab:"Star Platinum",ha:"Schwarz",st:"Lebendig"},
+{n:"Giorno Giovanna",e:"🌺",a:"JoJo's Biz. Adv.",g:"Action/Horror",s:"m",h:172,ra:"Mensch",f:"Passione",rk:"Boss",ab:"Gold Experience",ha:"Blond",st:"Lebendig"},
+{n:"Saitama",e:"👊",a:"One Punch Man",g:"Action/Comedy",s:"m",h:175,ra:"Mensch",f:"Hero-Vereinigung",rk:"B-Klasse",ab:"Ein-Punch",ha:"Keine",st:"Lebendig"},
+{n:"Genos",e:"🤖",a:"One Punch Man",g:"Action/Comedy",s:"m",h:178,ra:"Cyborg",f:"Hero-Vereinigung",rk:"S-Klasse",ab:"Cyborg-Waffen",ha:"Blond",st:"Lebendig"},
+{n:"Garou",e:"🐺",a:"One Punch Man",g:"Action/Comedy",s:"m",h:185,ra:"Mensch",f:"Monster-Vereinigung",rk:"Monster König",ab:"Heldenimitierung",ha:"Weiß",st:"Lebendig"},
+{n:"Mob (Shigeo K.)",e:"😶",a:"Mob Psycho 100",g:"Action/Übernatürlich",s:"m",h:163,ra:"Mensch/Esper",f:"Telepathie-Gesellschaft",rk:"Esper",ab:"Psychokinese",ha:"Schwarz",st:"Lebendig"},
+{n:"Lelouch vi Brit.",e:"♟️",a:"Code Geass",g:"Mecha/Psycho",s:"m",h:178,ra:"Mensch",f:"Schwarze Ritter",rk:"Anführer Zero",ab:"Geass",ha:"Schwarz",st:"Lebendig"},
+{n:"Guts",e:"⚔️",a:"Berserk",g:"Dark Fantasy/Action",s:"m",h:204,ra:"Mensch",f:"Band des Falken",rk:"Schwarzer Schwertkämpfer",ab:"Drachentöter",ha:"Schwarz",st:"Lebendig"},
+{n:"Griffith",e:"🦅",a:"Berserk",g:"Dark Fantasy/Action",s:"m",h:180,ra:"Gottheit",f:"Apostel",rk:"Gotteskind",ab:"Göttliche Hand",ha:"Silber",st:"Lebendig"},
+{n:"Pikachu",e:"⚡",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:40,ra:"Pokémon",f:"Elektro",rk:"Basis",ab:"Donnerblitz",ha:"Gelb",st:"Lebendig"},
+{n:"Glurak",e:"🐉",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:170,ra:"Pokémon",f:"Feuerstarter",rk:"Endstufe",ab:"Hitzewelle",ha:"Keine",st:"Lebendig"},
+{n:"Turtok",e:"🌊",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:160,ra:"Pokémon",f:"Wasserstarter",rk:"Endstufe",ab:"Hydropumpe",ha:"Keine",st:"Lebendig"},
+{n:"Bisaflor",e:"🌺",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:200,ra:"Pokémon",f:"Pflanzenstarter",rk:"Endstufe",ab:"Solarstrahl",ha:"Grün",st:"Lebendig"},
+{n:"Mewtwo",e:"🧬",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:200,ra:"Pokémon/Legendär",f:"Kanto Legendäre",rk:"Legendär",ab:"Psyschock",ha:"Lila",st:"Lebendig"},
+{n:"Mew",e:"✨",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:40,ra:"Pokémon/Legendär",f:"Kanto Legendäre",rk:"Mysteriös",ab:"Verwandlung",ha:"Rosa",st:"Lebendig"},
+{n:"Garados",e:"🐲",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:650,ra:"Pokémon",f:"Wasser/Flug",rk:"Stufe 2",ab:"Aquaknarre",ha:"Blau",st:"Lebendig"},
+{n:"Relaxo",e:"😴",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:210,ra:"Pokémon",f:"Normal",rk:"Basis",ab:"Körpercheck",ha:"Keine",st:"Lebendig"},
+{n:"Evoli",e:"🦊",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:30,ra:"Pokémon",f:"Normal",rk:"Basis",ab:"Schnelligkeit",ha:"Braun",st:"Lebendig"},
+{n:"Gengar",e:"👻",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:150,ra:"Pokémon",f:"Geist/Gift",rk:"Endstufe",ab:"Spukball",ha:"Lila",st:"Lebendig"},
+{n:"Ash Ketchum",e:"🧢",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:150,ra:"Mensch",f:"Trainer",rk:"Weltmeister",ab:"Pokemon-Training",ha:"Schwarz",st:"Lebendig"},
+{n:"Misty",e:"💧",a:"Pokémon",g:"Abenteuer/Fantasy",s:"f",h:153,ra:"Mensch",f:"Trainer",rk:"Gym-Leiterin",ab:"Wasser-Training",ha:"Orange",st:"Lebendig"},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let playerName='', target=null, guesses=[], won=false, lost=false;
+let revealedHints=[], hintsUsed=[], selectedChar=null;
+let leaderboard={}, lbSha='';
+
+// ── GITHUB LEADERBOARD API ────────────────────────────────────────────────────
+async function loadLb(showToast=false) {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${LB_FILE}`,{
+      headers:{'Authorization':'token '+GITHUB_TOKEN,'Accept':'application/vnd.github.v3+json'}
+    });
+    const d = await r.json();
+    lbSha = d.sha;
+    leaderboard = JSON.parse(atob(d.content.replace(/\n/g,''))).leaderboard || {};
+    renderLb();
+    if(showToast) toast('Leaderboard aktualisiert!');
+  } catch(e) { console.error('LB load error',e); }
+}
+
+async function saveLb() {
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify({leaderboard}))));
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${LB_FILE}`,{
+      method:'PUT',
+      headers:{'Authorization':'token '+GITHUB_TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'update leaderboard',content,sha:lbSha})
+    });
+    const d = await r.json();
+    if(d.content) lbSha = d.content.sha;
+  } catch(e) { console.error('LB save error',e); }
+}
+
+function getStats(name) {
+  return leaderboard[name] || {wins:0,losses:0,streak:0,bestStreak:0};
+}
+
+async function recordResult(didWin, attempts) {
+  // Re-fetch first to avoid overwriting concurrent changes
+  await loadLb();
+  const prev = getStats(playerName);
+  const newStreak = didWin ? prev.streak+1 : 0;
+  leaderboard[playerName] = {
+    wins: prev.wins + (didWin?1:0),
+    losses: prev.losses + (didWin?0:1),
+    streak: newStreak,
+    bestStreak: Math.max(prev.bestStreak||0, newStreak),
+  };
+  await saveLb();
+  updateStatsBar();
+  renderLb();
+}
+
+// ── RENDER LEADERBOARD ────────────────────────────────────────────────────────
+function renderLb() {
+  const rows = Object.entries(leaderboard).sort((a,b)=>{
+    if(b[1].streak!==a[1].streak) return b[1].streak-a[1].streak;
+    return b[1].wins-a[1].wins;
+  });
+  const medals=['🥇','🥈','🥉'];
+  const html = rows.length===0
+    ? '<div style="color:var(--muted);text-align:center;font-size:.8rem">Noch keine Einträge</div>'
+    : rows.map(([name,s],i)=>`
+      <div class="lb-entry ${name===playerName?'me':''}">
+        <div class="lb-entry-left">
+          <span class="lb-entry-rank">${medals[i]||`${i+1}.`}</span>
+          <span class="lb-entry-name ${name===playerName?'me':''}">${name}</span>
+        </div>
+        <div class="lb-entry-right">
+          <span>🔥 <b style="color:var(--partial)">${s.streak}</b></span>
+          <span>Best: <b>${s.bestStreak||0}</b></span>
+          <span style="color:var(--correct)">${s.wins}W</span>
+          <span style="color:var(--wrong)">${s.losses}L</span>
+        </div>
+      </div>`).join('');
+  document.getElementById('lbRows').innerHTML = html;
+
+  // Name screen preview
+  if(rows.length>0){
+    const prev = document.getElementById('lbPreview');
+    prev.style.display='block';
+    document.getElementById('lbPreviewRows').innerHTML = rows.slice(0,6).map(([name,s],i)=>`
+      <div class="lb-row">
+        <span class="lb-name">${medals[i]||`${i+1}.`} ${name}</span>
+        <span class="lb-stats">🔥${s.streak} · ${s.wins}W/${s.losses}L</span>
+      </div>`).join('');
+  }
+}
+
+// ── SCREENS ───────────────────────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function joinGame(){
+  const name = document.getElementById('nameInp').value.trim();
+  const err = document.getElementById('nameErr');
+  if(!name){err.textContent='Bitte gib einen Namen ein!';err.style.display='block';return;}
+  if(name.length>20){err.textContent='Max. 20 Zeichen!';err.style.display='block';return;}
+  err.style.display='none';
+  playerName=name;
+  updateStatsBar();
+  showScreen('gameScreen');
+  loadLb();
+  newGame();
+}
+
+function backToName(){
+  showScreen('nameScreen');
+  loadLb(); // refresh lb on name screen
+}
+
+document.getElementById('nameInp').addEventListener('keydown',e=>{if(e.key==='Enter')joinGame();});
+
+// ── STATS BAR ─────────────────────────────────────────────────────────────────
+function updateStatsBar(){
+  const s = getStats(playerName);
+  document.getElementById('statsName').textContent = playerName;
+  document.getElementById('statsStreak').textContent = s.streak;
+  document.getElementById('statsBest').textContent = s.bestStreak||0;
+  document.getElementById('statsWins').textContent = s.wins;
+  document.getElementById('statsLosses').textContent = s.losses;
+}
+
+// ── LEADERBOARD TOGGLE ────────────────────────────────────────────────────────
+function toggleLb(){
+  const p = document.getElementById('lbPanel');
+  p.classList.toggle('open');
+}
+
+// ── GAME ──────────────────────────────────────────────────────────────────────
+function newGame(){
+  target = C[Math.floor(Math.random()*C.length)];
+  guesses=[]; won=false; lost=false;
+  revealedHints=[]; hintsUsed=[]; selectedChar=null;
+  document.getElementById('searchInp').value='';
+  document.getElementById('searchInp').disabled=false;
+  document.getElementById('guessBtn').disabled=false;
+  document.getElementById('suggestions').innerHTML='';
+  document.getElementById('suggestions').classList.remove('open');
+  document.getElementById('guessGrid').innerHTML='';
+  document.getElementById('emptyState').style.display='block';
+  document.getElementById('winBanner').classList.remove('show');
+  document.getElementById('loseBanner').classList.remove('show');
+  document.getElementById('hintBox').classList.remove('show');
+  document.getElementById('hintContent').innerHTML='';
+  document.getElementById('hintBtn').style.display='none';
+  document.getElementById('giveUpBtn').style.display='none';
+  updateCounter();
+}
+
+function updateCounter(){
+  const n = guesses.length;
+  document.getElementById('cntNum').textContent = n;
+  const left = MAX_GUESSES-n;
+  const leftEl = document.getElementById('cntLeft');
+  if(n>0){
+    leftEl.textContent = left+' übrig';
+    leftEl.className = left<=10?'cnt-danger':left<=20?'cnt-warn':'';
+  } else {
+    leftEl.textContent='';
+  }
+  document.getElementById('giveUpBtn').style.display = n>0&&!won&&!lost?'block':'none';
+  // Hint button
+  const nextHint = HINT_AT.find(t=>n>=t&&!hintsUsed.includes(t));
+  const hintBtn = document.getElementById('hintBtn');
+  if(nextHint&&!won&&!lost){
+    hintBtn.style.display='block';
+    hintBtn.textContent=`💡 TIPP (bei ${nextHint})`;
+  } else {
+    hintBtn.style.display='none';
+  }
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function onSearch(){
+  const q = document.getElementById('searchInp').value.trim().toLowerCase();
+  selectedChar=null;
+  const box = document.getElementById('suggestions');
+  if(!q){box.innerHTML='';box.classList.remove('open');return;}
+  const already=new Set(guesses.map(g=>g.n));
+  const matches=C.filter(c=>c.n.toLowerCase().includes(q)&&!already.has(c.n)).slice(0,8);
+  if(matches.length===0){box.innerHTML='';box.classList.remove('open');return;}
+  box.innerHTML=matches.map(c=>`
+    <div class="sug-item" onclick="selectChar('${c.n.replace(/'/g,"\\'")}')">
+      <span class="sug-emoji">${c.e}</span>
+      <div><div class="sug-name">${c.n}</div><div class="sug-anime">${c.a}</div></div>
+    </div>`).join('');
+  box.classList.add('open');
+}
+
+function selectChar(name){
+  selectedChar=C.find(c=>c.n===name);
+  document.getElementById('searchInp').value=name;
+  document.getElementById('suggestions').innerHTML='';
+  document.getElementById('suggestions').classList.remove('open');
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.search-wrap')){
+    document.getElementById('suggestions').classList.remove('open');
+  }
+});
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+function submitGuess(){
+  if(won||lost) return;
+  const val=document.getElementById('searchInp').value.trim();
+  if(!val) return;
+  let char=selectedChar||C.find(c=>c.n.toLowerCase()===val.toLowerCase())||C.find(c=>c.n.toLowerCase().includes(val.toLowerCase()));
+  if(!char){
+    document.getElementById('searchInp').style.borderColor='var(--wrong)';
+    setTimeout(()=>document.getElementById('searchInp').style.borderColor='',600);
+    return;
+  }
+  if(guesses.find(g=>g.n===char.n)){
+    document.getElementById('searchInp').value='';
+    selectedChar=null;
+    return;
+  }
+  guesses.push(char);
+  selectedChar=null;
+  document.getElementById('searchInp').value='';
+  document.getElementById('suggestions').classList.remove('open');
+  document.getElementById('emptyState').style.display='none';
+  updateCounter();
+  renderRow(char, true);
+
+  if(char.n===target.n){
+    won=true;
+    setTimeout(()=>{
+      document.getElementById('winText').textContent=
+        `Du hast ${target.n} in ${guesses.length} Versuch${guesses.length===1?'':'en'} erraten!`;
+      const s=getStats(playerName);
+      document.getElementById('winStreak').textContent=`🔥 Streak wird ${s.streak+1}`;
+      document.getElementById('winBanner').classList.add('show');
+      document.getElementById('searchInp').disabled=true;
+      document.getElementById('guessBtn').disabled=true;
+      document.getElementById('giveUpBtn').style.display='none';
+      document.getElementById('hintBtn').style.display='none';
+      recordResult(true, guesses.length);
+    }, COL_KEYS.length*70+400);
+  } else if(guesses.length>=MAX_GUESSES){
+    lost=true;
+    setTimeout(()=>endLose(), COL_KEYS.length*70+400);
+  }
+}
+
+function giveUp(){
+  if(won||lost) return;
+  lost=true;
+  endLose();
+}
+
+function endLose(){
+  document.getElementById('solutionText').textContent=`${target.e} ${target.n} · ${target.a}`;
+  document.getElementById('loseBanner').classList.add('show');
+  document.getElementById('searchInp').disabled=true;
+  document.getElementById('guessBtn').disabled=true;
+  document.getElementById('giveUpBtn').style.display='none';
+  document.getElementById('hintBtn').style.display='none';
+  recordResult(false, guesses.length);
+}
+
+// ── HINT ──────────────────────────────────────────────────────────────────────
+function useHint(){
+  const nextHint=HINT_AT.find(t=>guesses.length>=t&&!hintsUsed.includes(t));
+  if(!nextHint||won||lost) return;
+  const all=COL_KEYS.map((_,i)=>i);
+  const pool=all.filter(i=>!revealedHints.includes(i));
+  if(pool.length===0) return;
+  const pick=pool[Math.floor(Math.random()*pool.length)];
+  revealedHints.push(pick);
+  hintsUsed.push(nextHint);
+
+  const hintBox=document.getElementById('hintBox');
+  hintBox.classList.add('show');
+  document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
+    <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
+  `).join('');
+  updateCounter();
+  toast(`Tipp aufgedeckt: ${COL_NAMES[pick]} = ${cellText(COL_KEYS[pick],target[COL_KEYS[pick]])}`);
+}
+
+// ── COMPARE ───────────────────────────────────────────────────────────────────
+function cmpH(g,t){
+  if(g===t) return{state:'correct',arrow:''};
+  return{state:Math.abs(g-t)<=10?'partial':'wrong',arrow:g<t?'↑':'↓'};
+}
+function cmpStr(g,t){
+  if(!g||!t) return'wrong';
+  if(g===t) return'correct';
+  const gp=g.toLowerCase().split('/'),tp=t.toLowerCase().split('/');
+  return gp.some(p=>tp.some(q=>q.trim()===p.trim()))?'partial':'wrong';
+}
+function cellState(key,guess,tgt){
+  if(key==='s') return guess.s===tgt.s?'correct':'wrong';
+  if(key==='h') return cmpH(guess.h,tgt.h).state;
+  if(key==='ab'||key==='ha'||key==='st') return guess[key]===tgt[key]?'correct':'wrong';
+  return cmpStr(guess[key],tgt[key]);
+}
+function cellArrow(key,guess,tgt){
+  return key==='h'?cmpH(guess.h,tgt.h).arrow:'';
+}
+function cellText(key,val){
+  if(key==='s') return val==='m'?'♂ Männl.':'♀ Weibl.';
+  if(key==='h') return val+' cm';
+  return val;
+}
+
+// ── RENDER ROW ────────────────────────────────────────────────────────────────
+function renderRow(char, animate){
+  const nameState = char.n===target.n?'correct':'wrong';
+  let html=`<div class="grid-row">
+    <div class="cell name-cell ${animate?'reveal':''} ${nameState}" style="${animate?'animation-delay:0ms':''}">
+      <span>${char.e}</span><span>${char.n}</span>
+    </div>`;
+  COL_KEYS.forEach((key,i)=>{
+    const state=cellState(key,char,target);
+    const arrow=cellArrow(key,char,target);
+    const delay=animate?`${(i+1)*70}ms`:'0ms';
+    html+=`<div class="cell ${animate?'reveal':''} ${state}" style="${animate?`animation-delay:${delay}`:''}">
+      ${cellText(key,char[key])}${arrow?`<span style="margin-left:2px">${arrow}</span>`:''}
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('guessGrid').insertAdjacentHTML('afterbegin',html);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadLb(); // load lb for name screen preview
+</script>
+</body>
+</html>
