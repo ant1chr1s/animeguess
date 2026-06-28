@@ -160,6 +160,19 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
 ::-webkit-scrollbar-track{background:var(--card)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
+
+/* KNOWN ROW */
+.known-row-wrap{margin-bottom:4px}
+.known-toggle{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:.72rem;color:var(--muted);cursor:pointer;user-select:none}
+.known-toggle input[type=checkbox]{width:14px;height:14px;accent-color:var(--correct);cursor:pointer;flex-shrink:0}
+.known-row{display:grid;grid-template-columns:1.4fr repeat(10,1fr);gap:4px}
+.known-cell{border-radius:7px;padding:5px 3px;display:flex;align-items:center;justify-content:center;
+  text-align:center;font-size:.62rem;font-weight:700;min-height:50px;
+  border:1.5px solid var(--border);background:var(--card);
+  word-break:break-word;line-height:1.2;color:var(--muted)}
+.known-cell.known{background:rgba(29,185,84,.18);border-color:var(--correct);color:#fff}
+.known-cell.name-cell{justify-content:flex-start;padding-left:8px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;text-align:left}
+
 /* ANIME LIST MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
@@ -292,6 +305,26 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
           <div class="col-label">Fähigkeit</div>
           <div class="col-label">Haarfarbe</div>
           <div class="col-label">Status</div>
+        </div>
+        <!-- KNOWN CATEGORIES ROW -->
+        <div class="known-row-wrap" id="knownRowWrap" style="display:none">
+          <label class="known-toggle">
+            <input type="checkbox" id="knownToggle" checked onchange="toggleKnownRow(this)">
+            Bekannte Kategorien anzeigen
+          </label>
+          <div class="known-row" id="knownRow">
+            <div class="known-cell name-cell" id="kc-name">?</div>
+            <div class="known-cell" id="kc-a">?</div>
+            <div class="known-cell" id="kc-g">?</div>
+            <div class="known-cell" id="kc-s">?</div>
+            <div class="known-cell" id="kc-h">?</div>
+            <div class="known-cell" id="kc-ra">?</div>
+            <div class="known-cell" id="kc-f">?</div>
+            <div class="known-cell" id="kc-rk">?</div>
+            <div class="known-cell" id="kc-ab">?</div>
+            <div class="known-cell" id="kc-ha">?</div>
+            <div class="known-cell" id="kc-st">?</div>
+          </div>
         </div>
         <div id="guessGrid"></div>
         <div class="empty-state" id="emptyState">Tippe einen Charakternamen ein und rate! Du hast 40 Versuche.</div>
@@ -1030,6 +1063,45 @@ function toggleAnimeList(){
   }
 }
 
+
+// ── KNOWN ROW ─────────────────────────────────────────────────────────────────
+function toggleKnownRow(cb){
+  const row = document.getElementById('knownRow');
+  row.style.display = cb.checked ? 'grid' : 'none';
+}
+
+function updateKnownRow(){
+  if(guesses.length === 0) {
+    document.getElementById('knownRowWrap').style.display = 'none';
+    return;
+  }
+  document.getElementById('knownRowWrap').style.display = 'block';
+
+  // Check name
+  const nameCorrect = guesses.some(g => g.n === target.n);
+  const nameCell = document.getElementById('kc-name');
+  nameCell.textContent = nameCorrect ? (target.e + ' ' + target.n) : '?';
+  nameCell.className = 'known-cell name-cell' + (nameCorrect ? ' known' : '');
+
+  // Check each category col
+  COL_KEYS.forEach(key => {
+    const el = document.getElementById('kc-' + key);
+    if(!el) return;
+    // A col is "known" if any guess got it exactly correct
+    const isCorrect = guesses.some(g => !g._hint && cellState(key, g, target) === 'correct');
+    // Also revealed by hint
+    const hintIdx = COL_KEYS.indexOf(key);
+    const isHinted = revealedHints.includes(hintIdx);
+    if(isCorrect || isHinted){
+      el.textContent = cellText(key, target[key]);
+      el.className = 'known-cell known';
+    } else {
+      el.textContent = '?';
+      el.className = 'known-cell';
+    }
+  });
+}
+
 // ── GITHUB LEADERBOARD API ────────────────────────────────────────────────────
 async function loadLb(showToast=false) {
   try {
@@ -1167,6 +1239,9 @@ function newGame(){
   document.getElementById('suggestions').classList.remove('open');
   document.getElementById('guessGrid').innerHTML='';
   document.getElementById('emptyState').style.display='block';
+  document.getElementById('knownRowWrap').style.display='none';
+  // reset known row cells
+  ['name','a','g','s','h','ra','f','rk','ab','ha','st'].forEach(k=>{const el=document.getElementById('kc-'+k);if(el){el.textContent='?';el.className='known-cell'+(k==='name'?' name-cell':'');}});
   document.getElementById('winBanner').classList.remove('show');
   document.getElementById('loseBanner').classList.remove('show');
   document.getElementById('hintBox').classList.remove('show');
@@ -1284,6 +1359,7 @@ function submitGuess(){
   document.getElementById('emptyState').style.display='none';
   updateCounter();
   renderRow(char, true);
+  updateKnownRow();
 
   if(char.n===target.n){
     won=true;
@@ -1352,6 +1428,7 @@ function useHint(){
   document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
     <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
   `).join('');
+  updateKnownRow();
   updateCounter();
   toast(`💡 Tipp: ${COL_NAMES[pick]} = ${cellText(COL_KEYS[pick],target[COL_KEYS[pick]])} (kostet 1 Versuch)`);
 }
