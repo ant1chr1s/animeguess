@@ -300,7 +300,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <!-- CONTROLS -->
     <div class="controls-row">
       <div class="counter">
-        Versuch <span class="cnt" id="cntNum">0</span> / 40
+        Versuch <span class="cnt" id="cntNum">0</span> / <span id="cntMax">40</span>
         <span id="cntLeft" style="margin-left:8px"></span>
       </div>
       <div class="ctrl-btns">
@@ -351,7 +351,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
           </div>
         </div>
         <div id="guessGrid"></div>
-        <div class="empty-state" id="emptyState">Tippe einen Charakternamen ein und rate! Du hast 40 Versuche.</div>
+        <div class="empty-state" id="emptyState">Tippe einen Charakternamen ein und rate!</div>
       </div>
     </div>
     <!-- GIVE UP BELOW GRID -->
@@ -1937,6 +1937,8 @@ function newGame(){
 function updateCounter(){
   const n = guesses.length;
   document.getElementById('cntNum').textContent = n;
+  const maxEl=document.getElementById('cntMax');
+  if(maxEl) maxEl.textContent=MAX_GUESSES;
   const left = MAX_GUESSES-n;
   const leftEl = document.getElementById('cntLeft');
   if(n>0){
