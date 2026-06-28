@@ -186,6 +186,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
 .anime-emoji{font-size:1.1rem}
 .anime-info{flex:1}
 .anime-name{font-weight:600;color:var(--text)}
+.anime-genre{font-size:.68rem;color:var(--cyan);margin-top:1px}
 .anime-count{font-size:.7rem;color:var(--muted)}
 @media(max-width:480px){.anime-grid{grid-template-columns:1fr}}
 </style>
@@ -1463,31 +1464,34 @@ let leaderboard={}, lbSha='';
 // ── ANIME LIST ────────────────────────────────────────────────────────────────
 function buildAnimeList(){
   const counts={};
-  const emojis={};
-  C.forEach(c=>{
-    counts[c.a]=(counts[c.a]||0)+1;
-    if(!emojis[c.a]) emojis[c.a]=c.e;
+  const genres={};
+  C.forEach(ch=>{
+    counts[ch.a]=(counts[ch.a]||0)+1;
+    if(!genres[ch.a]) genres[ch.a]=ch.g;
   });
   const sorted=Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0]));
   const animeEmojis={
-    'Naruto':'🍥','One Piece':'⛵','Dragon Ball Z':'🔵','Bleach':'🌙',
-    'Attack on Titan':'⚔️','Hunter x Hunter':'🎣','Demon Slayer':'🌊',
-    'My Hero Academia':'💚','Fullmetal Alchemist':'⚗️','Death Note':'📓',
-    'Haikyuu':'🏐','Kuroko no Basket':'🏀','Blue Lock':'⚽','Chainsaw Man':'⛓️',
+    'Naruto':'🍥','One Piece':'⛵','Dragon Ball Classic':'🔵','Dragon Ball Z':'🧬',
+    'Dragon Ball Super':'⭐','Bleach':'🌙','Attack on Titan':'⚔️',
+    'Hunter x Hunter':'🎣','Demon Slayer':'🌊','My Hero Academia':'💚',
+    'Fullmetal Alchemist':'⚗️','Death Note':'📓','Haikyuu':'🏐',
+    'Kuroko no Basket':'🏀','Blue Lock':'⚽','Chainsaw Man':'⛓️',
     'Akame ga Kill':'⚔️','Fire Force':'🔥','Soul Eater':'💀','Fairy Tail':'✨',
-    'Frieren':'🌿','JoJo\'s Biz. Adv.':'🌺','One Punch Man':'👊',
+    'Frieren':'🌿',"JoJo's Biz. Adv.":'🌺','One Punch Man':'👊',
     'Mob Psycho 100':'😶','Code Geass':'♟️','Berserk':'⚔️','Pokémon':'⚡',
     'Jujutsu Kaisen':'🥷','Sword Art Online':'🗡️','Yu-Gi-Oh!':'🃏',
     'KonoSuba':'💥','Dr. Stone':'🧪','Assassination Classroom':'🐙',
     'Black Clover':'⚔️','Tensura':'💧','Seven Deadly Sins':'🐉',
     'Record of Ragnarok':'⚡','Avatar':'🌪️','Solo Leveling':'🗡️',
-    'Cyberpunk Edgerunners':'🦾','Inazuma Eleven':'🧤'
+    'Cyberpunk Edgerunners':'🦾','Kickers':'🧤','Captain Tsubasa':'⚽',
+    'Kaiju No. 8':'🦟','Re:Zero':'🔄','Tokyo Revengers':'🐉','Kingdom Hearts':'🗝️'
   };
   document.getElementById('animeGrid').innerHTML=sorted.map(([name,count])=>`
     <div class="anime-item">
       <span class="anime-emoji">${animeEmojis[name]||'🎌'}</span>
       <div class="anime-info">
         <div class="anime-name">${name}</div>
+        <div class="anime-genre">${genres[name]||''}</div>
         <div class="anime-count">${count} Charaktere</div>
       </div>
     </div>`).join('');
