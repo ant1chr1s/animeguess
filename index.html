@@ -1882,7 +1882,9 @@ function cmpH(g,t){
 function cmpStr(g,t){
   if(!g||!t) return'wrong';
   if(g===t) return'correct';
-  const gp=g.toLowerCase().split('/'),tp=t.toLowerCase().split('/');
+  const gp=g.toLowerCase().split('/').filter(x=>x.trim()!=='kein');
+  const tp=t.toLowerCase().split('/').filter(x=>x.trim()!=='kein');
+  if(gp.length===0||tp.length===0) return'wrong';
   return gp.some(p=>tp.some(q=>q.trim()===p.trim()))?'partial':'wrong';
 }
 function cellState(key,guess,tgt){
