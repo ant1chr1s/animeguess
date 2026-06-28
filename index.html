@@ -159,6 +159,22 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--card)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ANIME LIST MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--card);border:1.5px solid var(--border);border-radius:16px;max-width:540px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--cyan);letter-spacing:1px}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.4rem;line-height:1}
+.modal-body{overflow-y:auto;padding:16px 20px}
+.anime-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.anime-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:.82rem}
+.anime-emoji{font-size:1.1rem}
+.anime-info{flex:1}
+.anime-name{font-weight:600;color:var(--text)}
+.anime-count{font-size:.7rem;color:var(--muted)}
+@media(max-width:480px){.anime-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -189,6 +205,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="header-logo">Anime<span style="font-weight:400">Guess</span></div>
     <div class="header-sub">Pokédle-Style · Multiplayer</div>
     <div class="header-btns">
+      <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="lbBtn" onclick="toggleLb()">🏆</button>
       <button class="btn-icon" onclick="backToName()" style="color:var(--muted)">↩</button>
     </div>
@@ -316,6 +333,8 @@ const C=[
 {n:"Obito Uchiha",e:"🌙",a:"Naruto",g:"Action/Abenteuer",s:"m",h:182,ra:"Mensch/Uchiha",f:"Akatsuki",rk:"S-Rang",ab:"Kamui",ha:"Schwarz",st:"Tot"},
 {n:"Deidara",e:"💣",a:"Naruto",g:"Action/Abenteuer",s:"m",h:166,ra:"Mensch",f:"Akatsuki",rk:"S-Rang",ab:"Explosionskunst",ha:"Blond",st:"Tot"},
 {n:"Kisame Hoshigaki",e:"🦈",a:"Naruto",g:"Action/Abenteuer",s:"m",h:195,ra:"Mensch",f:"Akatsuki",rk:"S-Rang",ab:"Samehada",ha:"Keine",st:"Tot"},
+{n:"Teuchi Ichiraku",e:"🍜",a:"Naruto",g:"Action/Abenteuer",s:"m",h:170,ra:"Mensch",f:"Konohagakure",rk:"Zivilist",ab:"Ramen kochen",ha:"Schwarz",st:"Lebendig"},
+// ONE PIECE
 {n:"Monkey D. Luffy",e:"⛵",a:"One Piece",g:"Action/Abenteuer",s:"m",h:174,ra:"Mensch",f:"Strohhut-Piraten",rk:"Kapitän",ab:"Gum-Gum-Frucht",ha:"Schwarz",st:"Lebendig"},
 {n:"Roronoa Zoro",e:"⚔️",a:"One Piece",g:"Action/Abenteuer",s:"m",h:181,ra:"Mensch",f:"Strohhut-Piraten",rk:"Erster Offizier",ab:"Santoryu",ha:"Grün",st:"Lebendig"},
 {n:"Nami",e:"🗺️",a:"One Piece",g:"Action/Abenteuer",s:"f",h:170,ra:"Mensch",f:"Strohhut-Piraten",rk:"Navigatorin",ab:"Klima-Takt",ha:"Orange",st:"Lebendig"},
@@ -332,6 +351,8 @@ const C=[
 {n:"Crocodile",e:"🪝",a:"One Piece",g:"Action/Abenteuer",s:"m",h:253,ra:"Mensch",f:"Baroque Works",rk:"Warlord",ab:"Sand-Sand-Frucht",ha:"Schwarz",st:"Lebendig"},
 {n:"Donquixote Doflamingo",e:"🕶️",a:"One Piece",g:"Action/Abenteuer",s:"m",h:305,ra:"Mensch",f:"Donquixote-Piraten",rk:"Warlord",ab:"Faden-Frucht",ha:"Blond",st:"Lebendig"},
 {n:"Kaido",e:"🐉",a:"One Piece",g:"Action/Abenteuer",s:"m",h:710,ra:"Mensch",f:"Tiere-Piraten",rk:"Yonko",ab:"Drachen-Frucht",ha:"Schwarz",st:"Lebendig"},
+{n:"Zeff",e:"👨‍🍳",a:"One Piece",g:"Action/Abenteuer",s:"m",h:185,ra:"Mensch",f:"Baratie",rk:"Chefkoch",ab:"Bein-Kampfkunst",ha:"Weiß",st:"Lebendig"},
+// DRAGON BALL Z
 {n:"Goku",e:"🔵",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:175,ra:"Saiyajin",f:"Erdverteidiger",rk:"Super Saiyajin",ab:"Kamehameha",ha:"Schwarz",st:"Lebendig"},
 {n:"Vegeta",e:"👑",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:165,ra:"Saiyajin",f:"Erdverteidiger",rk:"Saiyajin-Prinz",ab:"Final Flash",ha:"Schwarz",st:"Lebendig"},
 {n:"Gohan",e:"📚",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:176,ra:"Saiyajin/Halbmensch",f:"Erdverteidiger",rk:"Krieger",ab:"Masenkō",ha:"Schwarz",st:"Lebendig"},
@@ -343,6 +364,7 @@ const C=[
 {n:"Android 18",e:"💛",a:"Dragon Ball Z",g:"Action/Kampf",s:"f",h:165,ra:"Androide",f:"Erdverteidiger",rk:"Kriegerin",ab:"Energiestrahlen",ha:"Blond",st:"Lebendig"},
 {n:"Broly",e:"💪",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:198,ra:"Saiyajin",f:"Saiyajin-Legende",rk:"Legendärer Super Saiyajin",ab:"Eraser Cannon",ha:"Schwarz",st:"Lebendig"},
 {n:"Beerus",e:"😴",a:"Dragon Ball Z",g:"Action/Kampf",s:"m",h:195,ra:"Gottheit",f:"Götter",rk:"Gott der Zerstörung",ab:"Hakai",ha:"Keine",st:"Lebendig"},
+// BLEACH
 {n:"Ichigo Kurosaki",e:"🌙",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:181,ra:"Mensch/Shinigami",f:"Gotei 13",rk:"Ersatzshinigami",ab:"Getsuga Tenshō",ha:"Orange",st:"Lebendig"},
 {n:"Rukia Kuchiki",e:"❄️",a:"Bleach",g:"Action/Übernatürlich",s:"f",h:144,ra:"Shinigami",f:"Gotei 13",rk:"Taicho",ab:"Sode no Shirayuki",ha:"Schwarz",st:"Lebendig"},
 {n:"Byakuya Kuchiki",e:"🌸",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:181,ra:"Shinigami",f:"Gotei 13",rk:"Taicho",ab:"Senbonzakura",ha:"Schwarz",st:"Lebendig"},
@@ -357,6 +379,7 @@ const C=[
 {n:"Halibel",e:"🦈",a:"Bleach",g:"Action/Übernatürlich",s:"f",h:175,ra:"Arrancar",f:"Espada",rk:"Tres Espada",ab:"Tiburón",ha:"Blond",st:"Lebendig"},
 {n:"Yhwach",e:"👁️",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:182,ra:"Quincy",f:"Vandenreich",rk:"Quincy-König",ab:"Almighty",ha:"Schwarz",st:"Tot"},
 {n:"Jugram Haschwalth",e:"⚖️",a:"Bleach",g:"Action/Übernatürlich",s:"m",h:186,ra:"Quincy",f:"Stern-Ritter",rk:"Großmarschall",ab:"The Balance",ha:"Blond",st:"Tot"},
+// ATTACK ON TITAN
 {n:"Levi Ackerman",e:"⚔️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:160,ra:"Mensch/Ackermann",f:"Aufklärungstrupp",rk:"Hauptmann",ab:"ODM-Gerät",ha:"Schwarz",st:"Lebendig"},
 {n:"Eren Jäger",e:"🗡️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:183,ra:"Mensch/Titan",f:"Rumbling",rk:"Angreifender Titan",ab:"Titanverwandlung",ha:"Braun",st:"Tot"},
 {n:"Mikasa Ackerman",e:"🧣",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"f",h:170,ra:"Mensch/Ackermann",f:"Aufklärungstrupp",rk:"Soldatin",ab:"Akermann-Kraft",ha:"Schwarz",st:"Lebendig"},
@@ -366,6 +389,7 @@ const C=[
 {n:"Annie Leonhardt",e:"❄️",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"f",h:153,ra:"Mensch/Titan",f:"Krieger",rk:"Kriegerin",ab:"Weiblicher Titan",ha:"Blond",st:"Lebendig"},
 {n:"Zeke Jäger",e:"🐒",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"m",h:183,ra:"Mensch/Titan",f:"Marley",rk:"Krieger-Anführer",ab:"Tiertitan",ha:"Blond",st:"Tot"},
 {n:"Sasha Braus",e:"🍖",a:"Attack on Titan",g:"Action/Dark Fantasy",s:"f",h:168,ra:"Mensch",f:"Aufklärungstrupp",rk:"Soldatin",ab:"Bogenschießen",ha:"Braun",st:"Tot"},
+// HUNTER X HUNTER
 {n:"Killua Zoldyck",e:"⚡",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:158,ra:"Mensch",f:"Zoldyck-Familie",rk:"Assassin",ab:"Godspeed",ha:"Weiß",st:"Lebendig"},
 {n:"Gon Freecss",e:"🎣",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:154,ra:"Mensch",f:"Hunter-Vereinigung",rk:"Hunter",ab:"Jajanken",ha:"Schwarz",st:"Lebendig"},
 {n:"Hisoka Morow",e:"🃏",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:187,ra:"Mensch",f:"Phantom-Truppe",rk:"Mitglied",ab:"Bungee Gum",ha:"Rot",st:"Lebendig"},
@@ -373,6 +397,7 @@ const C=[
 {n:"Kurapika",e:"⛓️",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:171,ra:"Mensch",f:"Zodiacs",rk:"Hunter",ab:"Scarlet-Kette",ha:"Blond",st:"Lebendig"},
 {n:"Chrollo Lucilfer",e:"📖",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:177,ra:"Mensch",f:"Phantom-Truppe",rk:"Anführer",ab:"Diebstahl-Nen",ha:"Schwarz",st:"Lebendig"},
 {n:"Netero",e:"🙏",a:"Hunter x Hunter",g:"Action/Abenteuer",s:"m",h:160,ra:"Mensch",f:"Hunter-Vereinigung",rk:"Vorsitzender",ab:"100-Typ Guanyin",ha:"Weiß",st:"Tot"},
+// DEMON SLAYER
 {n:"Tanjiro Kamado",e:"🌊",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:165,ra:"Mensch",f:"Dämonentöter-Korps",rk:"Schüler",ab:"Wasser-Atmung",ha:"Schwarz",st:"Lebendig"},
 {n:"Nezuko Kamado",e:"🎋",a:"Demon Slayer",g:"Action/Übernatürlich",s:"f",h:153,ra:"Dämon",f:"Kamado-Familie",rk:"Dämon",ab:"Blutdämon-Kunst",ha:"Schwarz",st:"Lebendig"},
 {n:"Zenitsu Agatsuma",e:"⚡",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:164,ra:"Mensch",f:"Dämonentöter-Korps",rk:"Schüler",ab:"Donner-Atmung",ha:"Blond",st:"Lebendig"},
@@ -391,6 +416,7 @@ const C=[
 {n:"Gyomei Himejima",e:"⛓️",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:220,ra:"Mensch",f:"Hashira",rk:"Stein-Hashira",ab:"Stein-Atmung",ha:"Keine",st:"Tot"},
 {n:"Enmu",e:"🌙",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:174,ra:"Dämon",f:"Zwölf Kizuki",rk:"Untermond 1",ab:"Schlaf-Träume",ha:"Schwarz",st:"Tot"},
 {n:"Rui",e:"🕸️",a:"Demon Slayer",g:"Action/Übernatürlich",s:"m",h:152,ra:"Dämon",f:"Zwölf Kizuki",rk:"Untermond 5",ab:"Blut-Fäden",ha:"Weiß",st:"Tot"},
+// MY HERO ACADEMIA
 {n:"Deku (Izuku M.)",e:"💚",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:166,ra:"Mensch",f:"UA-Heldenschule",rk:"Pro-Held",ab:"One For All",ha:"Grün",st:"Lebendig"},
 {n:"Katsuki Bakugo",e:"💥",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:172,ra:"Mensch",f:"UA-Heldenschule",rk:"Pro-Held",ab:"Explosion",ha:"Blond",st:"Lebendig"},
 {n:"Shoto Todoroki",e:"🧊",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:176,ra:"Mensch",f:"UA-Heldenschule",rk:"Pro-Held",ab:"Eis und Feuer",ha:"Zweifarbig",st:"Lebendig"},
@@ -401,17 +427,20 @@ const C=[
 {n:"Tomura Shigaraki",e:"💀",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:175,ra:"Mensch",f:"Liga der Schurken",rk:"Anführer",ab:"Zerfall",ha:"Blau",st:"Lebendig"},
 {n:"Toga Himiko",e:"🩸",a:"My Hero Academia",g:"Action/Superhelden",s:"f",h:157,ra:"Mensch",f:"Liga der Schurken",rk:"Mitglied",ab:"Verwandlung",ha:"Blond",st:"Lebendig"},
 {n:"Dabi",e:"🔵",a:"My Hero Academia",g:"Action/Superhelden",s:"m",h:176,ra:"Mensch",f:"Liga der Schurken",rk:"Mitglied",ab:"Blaue Flammen",ha:"Schwarz",st:"Lebendig"},
+// FULLMETAL ALCHEMIST
 {n:"Edward Elric",e:"⚗️",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:165,ra:"Mensch",f:"Staatliche Alchemisten",rk:"Staatlicher Alchemist",ab:"Alchimie",ha:"Blond",st:"Lebendig"},
 {n:"Roy Mustang",e:"🔥",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:175,ra:"Mensch",f:"Staatliche Alchemisten",rk:"Oberst",ab:"Feuer-Alchimie",ha:"Schwarz",st:"Lebendig"},
 {n:"Scar",e:"❌",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:185,ra:"Ishvalan",f:"Ishval",rk:"Vigilant",ab:"Destruktions-Alchimie",ha:"Schwarz",st:"Lebendig"},
 {n:"Greed",e:"💎",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:180,ra:"Homunkulus",f:"Sieben Homunkuli",rk:"Homunkulus",ab:"Ultimativer Schild",ha:"Schwarz",st:"Tot"},
 {n:"Lust",e:"💋",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"f",h:165,ra:"Homunkulus",f:"Sieben Homunkuli",rk:"Homunkulus",ab:"Speer der Lust",ha:"Schwarz",st:"Tot"},
 {n:"Father",e:"⭕",a:"Fullmetal Alchemist",g:"Action/Fantasy",s:"m",h:175,ra:"Homunkulus",f:"Sieben Homunkuli",rk:"Gott",ab:"Gottheit",ha:"Blond",st:"Tot"},
+// DEATH NOTE
 {n:"Light Yagami",e:"📓",a:"Death Note",g:"Thriller/Psycho",s:"m",h:179,ra:"Mensch",f:"Kira",rk:"Gott der neuen Welt",ab:"Death Note",ha:"Braun",st:"Tot"},
 {n:"L Lawliet",e:"🍰",a:"Death Note",g:"Thriller/Psycho",s:"m",h:179,ra:"Mensch",f:"Verbrechensbekämpfung",rk:"Weltoberster Detektiv",ab:"Deduktion",ha:"Schwarz",st:"Tot"},
 {n:"Ryuk",e:"🍎",a:"Death Note",g:"Thriller/Psycho",s:"m",h:230,ra:"Shinigami",f:"Shinigami-Reich",rk:"Shinigami",ab:"Shinigami",ha:"Schwarz",st:"Lebendig"},
 {n:"Misa Amane",e:"✂️",a:"Death Note",g:"Thriller/Psycho",s:"f",h:152,ra:"Mensch",f:"Kira",rk:"Kiras Anhängerin",ab:"Shinigami-Augen",ha:"Blond",st:"Tot"},
 {n:"Near",e:"🎲",a:"Death Note",g:"Thriller/Psycho",s:"m",h:152,ra:"Mensch",f:"SPK",rk:"Detektiv",ab:"Deduktion",ha:"Weiß",st:"Lebendig"},
+// HAIKYUU
 {n:"Shoyo Hinata",e:"🏐",a:"Haikyuu",g:"Sport/Drama",s:"m",h:162,ra:"Mensch",f:"Karasuno",rk:"Außenangreifer",ab:"Schnellangriff",ha:"Orange",st:"Lebendig"},
 {n:"Tobio Kageyama",e:"👑",a:"Haikyuu",g:"Sport/Drama",s:"m",h:180,ra:"Mensch",f:"Karasuno",rk:"Zuspieler",ab:"Königlicher Satz",ha:"Schwarz",st:"Lebendig"},
 {n:"Kei Tsukishima",e:"🦕",a:"Haikyuu",g:"Sport/Drama",s:"m",h:188,ra:"Mensch",f:"Karasuno",rk:"Mittelblocker",ab:"Block",ha:"Blond",st:"Lebendig"},
@@ -425,45 +454,59 @@ const C=[
 {n:"Satori Tendo",e:"🖖",a:"Haikyuu",g:"Sport/Drama",s:"m",h:187,ra:"Mensch",f:"Shiratorizawa",rk:"Mittelblocker",ab:"Guess-Block",ha:"Rot",st:"Lebendig"},
 {n:"Tooru Oikawa",e:"🌟",a:"Haikyuu",g:"Sport/Drama",s:"m",h:184,ra:"Mensch",f:"Aoba Josai",rk:"Kapitän",ab:"Jump-Aufschlag",ha:"Braun",st:"Lebendig"},
 {n:"Iwaizumi Hajime",e:"💢",a:"Haikyuu",g:"Sport/Drama",s:"m",h:180,ra:"Mensch",f:"Aoba Josai",rk:"Vize-Kapitän",ab:"Angriff",ha:"Schwarz",st:"Lebendig"},
+// KUROKO NO BASKET
 {n:"Tetsuya Kuroko",e:"👻",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:168,ra:"Mensch",f:"Seirin",rk:"Aufbauspieler",ab:"Phantom-Dribbling",ha:"Blau",st:"Lebendig"},
 {n:"Taiga Kagami",e:"🔥",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:190,ra:"Mensch",f:"Seirin",rk:"Stürmer",ab:"Dunking",ha:"Rot",st:"Lebendig"},
 {n:"Daiki Aomine",e:"💙",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:192,ra:"Mensch",f:"Too",rk:"Stürmer",ab:"Formloser Stil",ha:"Blau",st:"Lebendig"},
 {n:"Seijuro Akashi",e:"⚡",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:173,ra:"Mensch",f:"Rakuzan",rk:"Kapitän",ab:"Emperor Eye",ha:"Rot",st:"Lebendig"},
 {n:"Atsushi Murasakibara",e:"💜",a:"Kuroko no Basket",g:"Sport/Drama",s:"m",h:208,ra:"Mensch",f:"Yosen",rk:"Center",ab:"Blocken",ha:"Lila",st:"Lebendig"},
+// BLUE LOCK
 {n:"Yoichi Isagi",e:"⚽",a:"Blue Lock",g:"Sport/Drama",s:"m",h:173,ra:"Mensch",f:"Blue Lock Team Z",rk:"Stürmer",ab:"Meta-Vision",ha:"Schwarz",st:"Lebendig"},
 {n:"Meguru Bachira",e:"🫧",a:"Blue Lock",g:"Sport/Drama",s:"m",h:172,ra:"Mensch",f:"Blue Lock Team Z",rk:"Stürmer",ab:"Dribbling",ha:"Braun",st:"Lebendig"},
 {n:"Seishiro Nagi",e:"😴",a:"Blue Lock",g:"Sport/Drama",s:"m",h:184,ra:"Mensch",f:"Blue Lock Team V",rk:"Stürmer",ab:"Ballkontrolle",ha:"Grau",st:"Lebendig"},
 {n:"Rin Itoshi",e:"🧊",a:"Blue Lock",g:"Sport/Drama",s:"m",h:178,ra:"Mensch",f:"Blue Lock Top 5",rk:"Stürmer",ab:"Doppelschuss",ha:"Blau",st:"Lebendig"},
 {n:"Sae Itoshi",e:"⚽",a:"Blue Lock",g:"Sport/Drama",s:"m",h:175,ra:"Mensch",f:"Nationalmannschaft",rk:"Profi",ab:"Vision",ha:"Rosa",st:"Lebendig"},
+// CHAINSAW MAN
 {n:"Denji",e:"⛓️",a:"Chainsaw Man",g:"Action/Horror",s:"m",h:173,ra:"Teufelshybrid",f:"Öffentliche Sicherheit",rk:"Teufelsjäger",ab:"Kettensägen-Teufel",ha:"Blond",st:"Lebendig"},
 {n:"Power",e:"🩸",a:"Chainsaw Man",g:"Action/Horror",s:"f",h:164,ra:"Teufelshybrid",f:"Öffentliche Sicherheit",rk:"Teufelsjäger",ab:"Blut-Teufel",ha:"Rosa",st:"Tot"},
 {n:"Makima",e:"🐕",a:"Chainsaw Man",g:"Action/Horror",s:"f",h:169,ra:"Teufel",f:"Öffentliche Sicherheit",rk:"Leiterin",ab:"Kontroll-Teufel",ha:"Braun",st:"Tot"},
 {n:"Aki Hayakawa",e:"🗡️",a:"Chainsaw Man",g:"Action/Horror",s:"m",h:181,ra:"Mensch",f:"Öffentliche Sicherheit",rk:"Senior-Jäger",ab:"Zukünftiger Teufel",ha:"Schwarz",st:"Tot"},
+// AKAME GA KILL
 {n:"Akame",e:"⚔️",a:"Akame ga Kill",g:"Action/Dark Fantasy",s:"f",h:160,ra:"Mensch",f:"Night Raid",rk:"Assassin",ab:"Murasame",ha:"Schwarz",st:"Lebendig"},
 {n:"Tatsumi",e:"🛡️",a:"Akame ga Kill",g:"Action/Dark Fantasy",s:"m",h:170,ra:"Mensch",f:"Night Raid",rk:"Assassin",ab:"Incursio",ha:"Braun",st:"Lebendig"},
 {n:"Esdeath",e:"❄️",a:"Akame ga Kill",g:"Action/Dark Fantasy",s:"f",h:167,ra:"Mensch",f:"Kaiserliche Armee",rk:"Generalin",ab:"Eis-Manipulation",ha:"Blau",st:"Tot"},
+// FIRE FORCE
 {n:"Shinra Kusakabe",e:"🔥",a:"Fire Force",g:"Action/Übernatürlich",s:"m",h:173,ra:"Mensch/3. Generation",f:"Kompanie 8",rk:"Feuerwehrmann",ab:"Feuer-Karate",ha:"Schwarz",st:"Lebendig"},
 {n:"Arthur Boyle",e:"⚔️",a:"Fire Force",g:"Action/Übernatürlich",s:"m",h:175,ra:"Mensch/3. Generation",f:"Kompanie 8",rk:"Feuerwehrmann",ab:"Excalibur",ha:"Blond",st:"Lebendig"},
+// SOUL EATER
 {n:"Maka Albarn",e:"📚",a:"Soul Eater",g:"Action/Fantasy",s:"f",h:155,ra:"Mensch",f:"DWMA",rk:"Meister",ab:"Genie-Wahrnehmung",ha:"Blond",st:"Lebendig"},
 {n:"Soul Evans",e:"🎹",a:"Soul Eater",g:"Action/Fantasy",s:"m",h:167,ra:"Mensch/Waffe",f:"DWMA",rk:"Todeswaffe",ab:"Sense-Verwandlung",ha:"Weiß",st:"Lebendig"},
 {n:"Death the Kid",e:"💀",a:"Soul Eater",g:"Action/Fantasy",s:"m",h:158,ra:"Gottheit",f:"DWMA",rk:"Lorder",ab:"Beelzebub Pistolen",ha:"Schwarz",st:"Lebendig"},
+// FAIRY TAIL
 {n:"Natsu Dragneel",e:"🔥",a:"Fairy Tail",g:"Action/Fantasy",s:"m",h:174,ra:"Mensch/E.N.D.",f:"Fairy Tail",rk:"S-Klasse-Magier",ab:"Feuerdrachen-Schlund",ha:"Rosa",st:"Lebendig"},
 {n:"Lucy Heartfilia",e:"⭐",a:"Fairy Tail",g:"Action/Fantasy",s:"f",h:165,ra:"Mensch",f:"Fairy Tail",rk:"Magierin",ab:"Sternenmagie",ha:"Blond",st:"Lebendig"},
 {n:"Erza Scarlet",e:"⚔️",a:"Fairy Tail",g:"Action/Fantasy",s:"f",h:168,ra:"Mensch",f:"Fairy Tail",rk:"S-Klasse-Magierin",ab:"Rüstungswechsel",ha:"Rot",st:"Lebendig"},
 {n:"Zeref Dragneel",e:"🖤",a:"Fairy Tail",g:"Action/Fantasy",s:"m",h:170,ra:"Unsterblich",f:"Alvarez-Reich",rk:"Kaiser",ab:"Schwarze Magie",ha:"Schwarz",st:"Tot"},
+// FRIEREN
 {n:"Frieren",e:"🌿",a:"Frieren",g:"Fantasy/Abenteuer",s:"f",h:155,ra:"Elf",f:"Himmels-Partei",rk:"S-Rang Magier",ab:"Magie-Analyse",ha:"Silber",st:"Lebendig"},
 {n:"Fern",e:"🌸",a:"Frieren",g:"Fantasy/Abenteuer",s:"f",h:162,ra:"Mensch",f:"Frierens Gruppe",rk:"Erste Klasse Magier",ab:"Magie-Geschwindigkeit",ha:"Lila",st:"Lebendig"},
 {n:"Stark",e:"🔥",a:"Frieren",g:"Fantasy/Abenteuer",s:"m",h:177,ra:"Mensch",f:"Frierens Gruppe",rk:"Krieger",ab:"Krieger-Aura",ha:"Braun",st:"Lebendig"},
+// JOJO
 {n:"Dio Brando",e:"🧛",a:"JoJo's Biz. Adv.",g:"Action/Horror",s:"m",h:195,ra:"Vampir",f:"Dios Dienst",rk:"Vampirfürst",ab:"The World",ha:"Blond",st:"Tot"},
 {n:"Jotaro Kujo",e:"🌊",a:"JoJo's Biz. Adv.",g:"Action/Horror",s:"m",h:195,ra:"Mensch",f:"Kujo-Familie",rk:"Held",ab:"Star Platinum",ha:"Schwarz",st:"Lebendig"},
 {n:"Giorno Giovanna",e:"🌺",a:"JoJo's Biz. Adv.",g:"Action/Horror",s:"m",h:172,ra:"Mensch",f:"Passione",rk:"Boss",ab:"Gold Experience",ha:"Blond",st:"Lebendig"},
+// ONE PUNCH MAN
 {n:"Saitama",e:"👊",a:"One Punch Man",g:"Action/Comedy",s:"m",h:175,ra:"Mensch",f:"Hero-Vereinigung",rk:"B-Klasse",ab:"Ein-Punch",ha:"Keine",st:"Lebendig"},
 {n:"Genos",e:"🤖",a:"One Punch Man",g:"Action/Comedy",s:"m",h:178,ra:"Cyborg",f:"Hero-Vereinigung",rk:"S-Klasse",ab:"Cyborg-Waffen",ha:"Blond",st:"Lebendig"},
 {n:"Garou",e:"🐺",a:"One Punch Man",g:"Action/Comedy",s:"m",h:185,ra:"Mensch",f:"Monster-Vereinigung",rk:"Monster König",ab:"Heldenimitierung",ha:"Weiß",st:"Lebendig"},
+// MOB PSYCHO
 {n:"Mob (Shigeo K.)",e:"😶",a:"Mob Psycho 100",g:"Action/Übernatürlich",s:"m",h:163,ra:"Mensch/Esper",f:"Telepathie-Gesellschaft",rk:"Esper",ab:"Psychokinese",ha:"Schwarz",st:"Lebendig"},
+// CODE GEASS
 {n:"Lelouch vi Brit.",e:"♟️",a:"Code Geass",g:"Mecha/Psycho",s:"m",h:178,ra:"Mensch",f:"Schwarze Ritter",rk:"Anführer Zero",ab:"Geass",ha:"Schwarz",st:"Lebendig"},
+// BERSERK
 {n:"Guts",e:"⚔️",a:"Berserk",g:"Dark Fantasy/Action",s:"m",h:204,ra:"Mensch",f:"Band des Falken",rk:"Schwarzer Schwertkämpfer",ab:"Drachentöter",ha:"Schwarz",st:"Lebendig"},
 {n:"Griffith",e:"🦅",a:"Berserk",g:"Dark Fantasy/Action",s:"m",h:180,ra:"Gottheit",f:"Apostel",rk:"Gotteskind",ab:"Göttliche Hand",ha:"Silber",st:"Lebendig"},
+// POKEMON
 {n:"Pikachu",e:"⚡",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:40,ra:"Pokémon",f:"Elektro",rk:"Basis",ab:"Donnerblitz",ha:"Gelb",st:"Lebendig"},
 {n:"Glurak",e:"🐉",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:170,ra:"Pokémon",f:"Feuerstarter",rk:"Endstufe",ab:"Hitzewelle",ha:"Keine",st:"Lebendig"},
 {n:"Turtok",e:"🌊",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:160,ra:"Pokémon",f:"Wasserstarter",rk:"Endstufe",ab:"Hydropumpe",ha:"Keine",st:"Lebendig"},
@@ -476,12 +519,350 @@ const C=[
 {n:"Gengar",e:"👻",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:150,ra:"Pokémon",f:"Geist/Gift",rk:"Endstufe",ab:"Spukball",ha:"Lila",st:"Lebendig"},
 {n:"Ash Ketchum",e:"🧢",a:"Pokémon",g:"Abenteuer/Fantasy",s:"m",h:150,ra:"Mensch",f:"Trainer",rk:"Weltmeister",ab:"Pokemon-Training",ha:"Schwarz",st:"Lebendig"},
 {n:"Misty",e:"💧",a:"Pokémon",g:"Abenteuer/Fantasy",s:"f",h:153,ra:"Mensch",f:"Trainer",rk:"Gym-Leiterin",ab:"Wasser-Training",ha:"Orange",st:"Lebendig"},
+// JUJUTSU KAISEN
+{n:"Yuji Itadori",e:"👊",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:173,ra:"Mensch/Fluch",f:"Jujutsu-Hochschule",rk:"Grad 1 Kandidat",ab:"Schwarzer Blitz",ha:"Rosa",st:"Lebendig"},
+{n:"Megumi Fushiguro",e:"🐕",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:175,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Grad 2",ab:"Zehn-Schatten-Technik",ha:"Schwarz",st:"Lebendig"},
+{n:"Nobara Kugisaki",e:"🔨",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"f",h:160,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Grad 3",ab:"Stropuppe",ha:"Orange",st:"Tot"},
+{n:"Satoru Gojo",e:"🥷",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:190,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Sonder-Grad 1",ab:"Unendlichkeit",ha:"Weiß",st:"Tot"},
+{n:"Suguru Geto",e:"🧿",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:187,ra:"Mensch",f:"Verfluchte Geister",rk:"Sonder-Grad 1",ab:"Fluchmaniulation",ha:"Schwarz",st:"Tot"},
+{n:"Ryomen Sukuna",e:"👹",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:188,ra:"Fluch/Gottheit",f:"Keine",rk:"König der Flüche",ab:"Dismantle",ha:"Rosa",st:"Lebendig"},
+{n:"Toge Inumaki",e:"🍙",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:164,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Halb-Grad 1",ab:"Fluchsprache",ha:"Weiß",st:"Lebendig"},
+{n:"Panda",e:"🐼",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:196,ra:"Pseudo-Geist",f:"Jujutsu-Hochschule",rk:"Grad 2",ab:"Gorilla-Modus",ha:"Keine",st:"Lebendig"},
+{n:"Aoi Todo",e:"💪",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:190,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Grad 1",ab:"Boogie Woogie",ha:"Keine",st:"Lebendig"},
+{n:"Kento Nanami",e:"👔",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:184,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Grad 1",ab:"Verhältnis-Technik",ha:"Blond",st:"Tot"},
+{n:"Mahito",e:"🧵",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:179,ra:"Fluch",f:"Verfluchte Geister",rk:"Sonder-Grad",ab:"Idle Transfiguration",ha:"Zweifarbig",st:"Tot"},
+{n:"Jogo",e:"🌋",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:170,ra:"Fluch",f:"Verfluchte Geister",rk:"Sonder-Grad",ab:"Flammen-Fluch",ha:"Keine",st:"Tot"},
+{n:"Hanami",e:"🌸",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:195,ra:"Fluch",f:"Verfluchte Geister",rk:"Sonder-Grad",ab:"Pflanzen-Fluch",ha:"Keine",st:"Tot"},
+{n:"Choso",e:"🩸",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:180,ra:"Halbfluch",f:"Verfluchte Geister",rk:"Fluch-Werkzeug",ab:"Blut-Manipulation",ha:"Schwarz",st:"Lebendig"},
+{n:"Yuta Okkotsu",e:"⚔️",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:180,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Sonder-Grad 1",ab:"Rika-Fluch",ha:"Schwarz",st:"Lebendig"},
+{n:"Maki Zenin",e:"🏹",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"f",h:170,ra:"Mensch (kein Fluch)",f:"Jujutsu-Hochschule",rk:"Grad 4",ab:"Fluchwaffe",ha:"Schwarz",st:"Lebendig"},
+{n:"Mei Mei",e:"🦅",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"f",h:168,ra:"Mensch",f:"Unabhängig",rk:"Grad 1",ab:"Raben-Technik",ha:"Weiß",st:"Lebendig"},
+{n:"Naobito Zenin",e:"⚡",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:170,ra:"Mensch",f:"Zenin-Clan",rk:"Sonder-Grad 1",ab:"Projection Sorcery",ha:"Schwarz",st:"Tot"},
+{n:"Hiromi Higuruma",e:"⚖️",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:178,ra:"Mensch",f:"Kulminationsturnier",rk:"Grad 1",ab:"Domain Expansion",ha:"Schwarz",st:"Lebendig"},
+{n:"Hakari Kinji",e:"🎰",a:"Jujutsu Kaisen",g:"Action/Übernatürlich",s:"m",h:185,ra:"Mensch",f:"Jujutsu-Hochschule",rk:"Grad 1 Kandidat",ab:"Pachinko-Domain",ha:"Schwarz",st:"Lebendig"},
+// SWORD ART ONLINE
+{n:"Kirito (Kazuto K.)",e:"🗡️",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:172,ra:"Mensch",f:"Schwarze Schwerter",rk:"Beater",ab:"Dual Blades",ha:"Schwarz",st:"Lebendig"},
+{n:"Asuna Yuuki",e:"⚡",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:168,ra:"Mensch",f:"KoB-Gilde",rk:"Unter-Anführerin",ab:"Blitz-Klinge",ha:"Braun",st:"Lebendig"},
+{n:"Sinon (Shino A.)",e:"🎯",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:167,ra:"Mensch",f:"GGO-Spielerin",rk:"Top-Schützin",ab:"Hecate II",ha:"Blau",st:"Lebendig"},
+{n:"Leafa (Suguha K.)",e:"🌿",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:162,ra:"Mensch",f:"ALO-Spielerin",rk:"Sylph",ab:"Schwingen",ha:"Grün",st:"Lebendig"},
+{n:"Klein (Ryoutarou F.)",e:"🥷",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:174,ra:"Mensch",f:"Furinkazan-Gilde",rk:"Anführer",ab:"Katana",ha:"Rot",st:"Lebendig"},
+{n:"Agil (Andrew G.)",e:"🪓",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:188,ra:"Mensch",f:"Schwarze Katzen-Gilde",rk:"Händler",ab:"Axt",ha:"Keine",st:"Lebendig"},
+{n:"Yui",e:"🧒",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:100,ra:"KI",f:"Kiritos Gruppe",rk:"KI-Tochter",ab:"Systemzugang",ha:"Schwarz",st:"Lebendig"},
+{n:"Alice Zuberg",e:"🌸",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:165,ra:"Mensch/KI",f:"Integrity Knights",rk:"Oberste Ritterin",ab:"Goldene Klingen",ha:"Blond",st:"Lebendig"},
+{n:"Eugeo",e:"❄️",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:172,ra:"Mensch",f:"Akademie Norlangarth",rk:"Ritter",ab:"Blauer Rosenklinge",ha:"Blond",st:"Tot"},
+{n:"Administrator (Quinella)",e:"👑",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:163,ra:"Mensch/Gottheit",f:"Kirche",rk:"Pontifex",ab:"Absolute Kontrolle",ha:"Silber",st:"Tot"},
+{n:"Oberon (Sugou N.)",e:"🧝",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:180,ra:"Mensch",f:"Fairy King",rk:"Fairy King",ab:"GM-Rechte",ha:"Grün",st:"Lebendig"},
+{n:"Death Gun (Sterben)",e:"💀",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:180,ra:"Mensch",f:"Laughing Coffin",rk:"Mörder",ab:"Todes-Pistole",ha:"Schwarz",st:"Lebendig"},
+{n:"Yuuki Konno",e:"💜",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:156,ra:"Mensch",f:"Sleeping Knights",rk:"Anführerin",ab:"Mutterwille",ha:"Lila",st:"Tot"},
+{n:"Kayaba Akihiko",e:"🏰",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:180,ra:"Mensch",f:"Kayabas Labor",rk:"Heathcliff",ab:"Unsterblicher Objekt",ha:"Braun",st:"Tot"},
+{n:"Liz (Rika S.)",e:"🔨",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:162,ra:"Mensch",f:"Kiritos Gruppe",rk:"Schmiedin",ab:"Schmiedekunst",ha:"Braun",st:"Lebendig"},
+{n:"Silica (Keiko A.)",e:"🐉",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:156,ra:"Mensch",f:"Kiritos Gruppe",rk:"Biest-Zähmerin",ab:"Dolch",ha:"Braun",st:"Lebendig"},
+{n:"Sortiliena Serlut",e:"🌊",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:165,ra:"Mensch",f:"Akademie",rk:"Erste Schülerin",ab:"Fließendes Schwert",ha:"Blond",st:"Lebendig"},
+{n:"Renly Synthesis Twenty-Seven",e:"🧊",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:170,ra:"Mensch",f:"Integrity Knights",rk:"Ritter",ab:"Eisschildtechnik",ha:"Blau",st:"Lebendig"},
+{n:"Gabriel Miller (Subtilizer)",e:"🎮",a:"Sword Art Online",g:"Action/Isekai",s:"m",h:182,ra:"Mensch",f:"US-Armee",rk:"Oberst",ab:"Seelen-Manipulation",ha:"Blond",st:"Lebendig"},
+{n:"Yuna (Yuuna)",e:"🎤",a:"Sword Art Online",g:"Action/Isekai",s:"f",h:162,ra:"KI",f:"Ordinal Scale",rk:"KI-Idol",ab:"Heilungs-Song",ha:"Blond",st:"Lebendig"},
+// YUGIOH
+{n:"Yugi Muto",e:"🃏",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:153,ra:"Mensch",f:"Yugi-Gruppe",rk:"König der Spiele",ab:"Millennium-Puzzle",ha:"Mehrfarbig",st:"Lebendig"},
+{n:"Yami Yugi (Atem)",e:"👑",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:153,ra:"Pharao-Geist",f:"Altes Ägypten",rk:"Pharao",ab:"Dark Magician",ha:"Mehrfarbig",st:"Tot"},
+{n:"Joey Wheeler",e:"🐺",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:170,ra:"Mensch",f:"Yugi-Gruppe",rk:"Runner-Up",ab:"Red-Eyes Black Dragon",ha:"Blond",st:"Lebendig"},
+{n:"Seto Kaiba",e:"🐉",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:186,ra:"Mensch",f:"KaibaCorp",rk:"CEO",ab:"Blue-Eyes White Dragon",ha:"Braun",st:"Lebendig"},
+{n:"Tea Gardner",e:"💙",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"f",h:160,ra:"Mensch",f:"Yugi-Gruppe",rk:"Freundin",ab:"Dark Magician Girl",ha:"Braun",st:"Lebendig"},
+{n:"Tristan Taylor",e:"⚡",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:172,ra:"Mensch",f:"Yugi-Gruppe",rk:"Freund",ab:"Super-Robo",ha:"Braun",st:"Lebendig"},
+{n:"Bakura (Yami)",e:"💀",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:161,ra:"Dieb-König-Geist",f:"Dieb-König",rk:"König der Diebe",ab:"Destiny Board",ha:"Weiß",st:"Tot"},
+{n:"Maximillion Pegasus",e:"🎨",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:183,ra:"Mensch",f:"Industrial Illusions",rk:"CEO",ab:"Millennium-Auge",ha:"Silber",st:"Lebendig"},
+{n:"Marik Ishtar",e:"☀️",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:178,ra:"Mensch",f:"Ghoul",rk:"Anführer",ab:"The Winged Dragon of Ra",ha:"Blond",st:"Lebendig"},
+{n:"Ishizu Ishtar",e:"🏺",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"f",h:168,ra:"Mensch",f:"Wächter",rk:"Wächterin",ab:"Millennium-Anhänger",ha:"Schwarz",st:"Lebendig"},
+{n:"Bandit Keith",e:"🎸",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:185,ra:"Mensch",f:"Keine",rk:"Amerik. Meister",ab:"Machine-Deck",ha:"Blond",st:"Lebendig"},
+{n:"Mai Valentine",e:"🌹",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"f",h:170,ra:"Mensch",f:"Keine",rk:"Turnierspielerin",ab:"Harpie Lady",ha:"Blond",st:"Lebendig"},
+{n:"Duke Devlin",e:"🎲",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:175,ra:"Mensch",f:"Yugi-Gruppe",rk:"Spieleentwickler",ab:"Dungeon Dice Monsters",ha:"Schwarz",st:"Lebendig"},
+{n:"Rex Raptor",e:"🦕",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:162,ra:"Mensch",f:"Pegasus-Crew",rk:"Turnierspieler",ab:"Dino-Deck",ha:"Braun",st:"Lebendig"},
+{n:"Weevil Underwood",e:"🐛",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:155,ra:"Mensch",f:"Pegasus-Crew",rk:"Meister",ab:"Insekten-Deck",ha:"Grün",st:"Lebendig"},
+{n:"Noah Kaiba",e:"🌿",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:155,ra:"Digitaler Geist",f:"Big Five",rk:"Simulierter Sohn",ab:"Virtueller Körper",ha:"Grün",st:"Tot"},
+{n:"Dartz",e:"🌊",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:188,ra:"Unsterblich",f:"Doma",rk:"König",ab:"Orichalcos",ha:"Grün",st:"Lebendig"},
+{n:"Rafael",e:"🌊",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:190,ra:"Mensch",f:"Doma",rk:"Domas Krieger",ab:"Guardians",ha:"Blond",st:"Lebendig"},
+{n:"Yami Marik",e:"👁️",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:178,ra:"Mensch/Alter Ego",f:"Ghoul",rk:"Alter Ego",ab:"Ra – God Phoenix",ha:"Blond",st:"Tot"},
+{n:"Aigami",e:"💎",a:"Yu-Gi-Oh!",g:"Abenteuer/Fantasy",s:"m",h:173,ra:"Mensch",f:"Quantum Cube",rk:"Hüter",ab:"Quantum-Kraft",ha:"Blond",st:"Lebendig"},
+// KONOSUBA
+{n:"Kazuma Sato",e:"🧢",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:165,ra:"Mensch",f:"Kazumas Gruppe",rk:"Abenteurer",ab:"Stehlen",ha:"Braun",st:"Lebendig"},
+{n:"Aqua",e:"💧",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:163,ra:"Göttin",f:"Kazumas Gruppe",rk:"Göttin (degradiert)",ab:"Wasser-Magie",ha:"Blau",st:"Lebendig"},
+{n:"Megumin",e:"💥",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:154,ra:"Crimson Demon",f:"Kazumas Gruppe",rk:"Erzmagierin",ab:"Explosion",ha:"Schwarz",st:"Lebendig"},
+{n:"Darkness (Lalatina)",e:"🛡️",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:168,ra:"Mensch",f:"Kazumas Gruppe",rk:"Kreuzritterin",ab:"Unverwundbar-Tank",ha:"Blond",st:"Lebendig"},
+{n:"Eris",e:"🌸",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:160,ra:"Göttin",f:"Himmel",rk:"Göttin",ab:"Wiedergeburt",ha:"Silber",st:"Lebendig"},
+{n:"Wiz",e:"🧙",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:165,ra:"Lich",f:"Wiz-Laden",rk:"Ladenbesitzerin",ab:"Eis-Magie",ha:"Braun",st:"Lebendig"},
+{n:"Vanir",e:"🎭",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:175,ra:"Dämon",f:"Wiz-Laden",rk:"Dämon-Lord-General",ab:"Masken-Schlag",ha:"Keine",st:"Lebendig"},
+{n:"Yunyun",e:"🌸",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:156,ra:"Crimson Demon",f:"Keine",rk:"Rivalin",ab:"Blitz-Magie",ha:"Braun",st:"Lebendig"},
+{n:"Hans",e:"🐸",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:160,ra:"Dämon",f:"Dämon-Lord-Armee",rk:"General",ab:"Schleim-Gift",ha:"Grün",st:"Tot"},
+{n:"Beldia",e:"💀",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:180,ra:"Dullahan",f:"Dämon-Lord-Armee",rk:"General",ab:"Kopf-Angriff",ha:"Keine",st:"Tot"},
+{n:"Sylvia",e:"⚡",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:185,ra:"Chimäre",f:"Dämon-Lord-Armee",rk:"General",ab:"Chimären-Kraft",ha:"Grün",st:"Tot"},
+{n:"Wolbach",e:"🔥",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:150,ra:"Göttin/Dämon",f:"Keine",rk:"Arch-Witch",ab:"Explosion",ha:"Blond",st:"Lebendig"},
+{n:"Chris",e:"⚗️",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:155,ra:"Mensch",f:"Keine",rk:"Diebin",ab:"Stehlen",ha:"Silber",st:"Lebendig"},
+{n:"Mitsurugi",e:"⚔️",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:177,ra:"Mensch",f:"Keine",rk:"Auserwählter",ab:"Heiliges Schwert",ha:"Schwarz",st:"Lebendig"},
+{n:"Dust",e:"🎲",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:175,ra:"Mensch",f:"Keine",rk:"Abenteurer",ab:"Drachenlanze",ha:"Blond",st:"Lebendig"},
+{n:"Sena",e:"📋",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:163,ra:"Mensch",f:"Abenteurergilde",rk:"Staatsanwältin",ab:"Gesetz",ha:"Schwarz",st:"Lebendig"},
+{n:"Cecily",e:"⚔️",a:"KonoSuba",g:"Comedy/Isekai",s:"f",h:160,ra:"Mensch",f:"Kirche der Eris",rk:"Priesterin",ab:"Heilig-Angriff",ha:"Orange",st:"Lebendig"},
+{n:"Keith",e:"🃏",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:173,ra:"Mensch",f:"Kazumas Freunde",rk:"Abenteurer",ab:"Sword",ha:"Schwarz",st:"Lebendig"},
+{n:"Darkness Senior (Ignis)",e:"🔥",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:182,ra:"Mensch",f:"Alderp-Haus",rk:"Vater",ab:"Schwertkampf",ha:"Blond",st:"Lebendig"},
+{n:"Alderp Rayhart",e:"💰",a:"KonoSuba",g:"Comedy/Isekai",s:"m",h:170,ra:"Mensch",f:"Damenvale",rk:"Bürgermeister",ab:"Geld-Macht",ha:"Braun",st:"Lebendig"},
+// DR. STONE
+{n:"Senku Ishigami",e:"🧪",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:170,ra:"Mensch",f:"Kingdom of Science",rk:"Anführer",ab:"Wissenschaft",ha:"Weiß",st:"Lebendig"},
+{n:"Taiju Oki",e:"💪",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:188,ra:"Mensch",f:"Kingdom of Science",rk:"Mitglied",ab:"Ausdauer",ha:"Braun",st:"Lebendig"},
+{n:"Yuzuriha Ogawa",e:"🌸",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"f",h:162,ra:"Mensch",f:"Kingdom of Science",rk:"Mitglied",ab:"Handarbeit",ha:"Braun",st:"Lebendig"},
+{n:"Tsukasa Shishio",e:"🦁",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:197,ra:"Mensch",f:"Tsukasa-Reich",rk:"Imperator",ab:"Kampfkunst",ha:"Weiß",st:"Lebendig"},
+{n:"Kohaku",e:"⚔️",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"f",h:162,ra:"Mensch",f:"Kingdom of Science",rk:"Kriegerin",ab:"Kampfkunst",ha:"Blond",st:"Lebendig"},
+{n:"Chrome",e:"🔬",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:170,ra:"Mensch",f:"Kingdom of Science",rk:"Sorcerer",ab:"Steinzeit-Wissenschaft",ha:"Braun",st:"Lebendig"},
+{n:"Gen Asagiri",e:"🎭",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:174,ra:"Mensch",f:"Kingdom of Science",rk:"Mentalist",ab:"Täuschung",ha:"Schwarz",st:"Lebendig"},
+{n:"Hyoga",e:"🌿",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:183,ra:"Mensch",f:"Tsukasa-Reich",rk:"General",ab:"Speerkampf",ha:"Blond",st:"Lebendig"},
+{n:"Nikki Hanada",e:"🏋️",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"f",h:176,ra:"Mensch",f:"Kingdom of Science",rk:"Kriegerin",ab:"Körperkraft",ha:"Orange",st:"Lebendig"},
+{n:"Ryusui Nanami",e:"⛵",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:176,ra:"Mensch",f:"Kingdom of Science",rk:"Kapitän",ab:"Navigation",ha:"Braun",st:"Lebendig"},
+{n:"Francois",e:"🍽️",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:172,ra:"Mensch",f:"Kingdom of Science",rk:"Koch",ab:"Kochen",ha:"Schwarz",st:"Lebendig"},
+{n:"Homura Momiji",e:"🔥",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"f",h:162,ra:"Mensch",f:"Tsukasa-Reich",rk:"Spionin",ab:"Parkour",ha:"Orange",st:"Lebendig"},
+{n:"Mozu",e:"💢",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:185,ra:"Mensch",f:"Petrifikations-Dorf",rk:"Krieger",ab:"Kampfkunst",ha:"Schwarz",st:"Lebendig"},
+{n:"Ginro",e:"🥈",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:166,ra:"Mensch",f:"Kingdom of Science",rk:"Silberspeer-Träger",ab:"Speer",ha:"Silber",st:"Lebendig"},
+{n:"Kinro",e:"🥇",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:172,ra:"Mensch",f:"Kingdom of Science",rk:"Goldspeer-Träger",ab:"Speer",ha:"Blond",st:"Lebendig"},
+{n:"Ruri",e:"🌺",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"f",h:165,ra:"Mensch",f:"Steindorf",rk:"Priesterin",ab:"Gesundheitswissen",ha:"Weiß",st:"Lebendig"},
+{n:"Amaryllis",e:"🌸",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"f",h:158,ra:"Mensch",f:"Petrifikations-Dorf",rk:"Agentin",ab:"Verführung",ha:"Rosa",st:"Lebendig"},
+{n:"Stanley Snyder",e:"🔫",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:182,ra:"Mensch",f:"US-Armee",rk:"Soldat",ab:"Scharfschütze",ha:"Braun",st:"Lebendig"},
+{n:"Dr. Xeno Houston",e:"🔬",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"m",h:178,ra:"Mensch",f:"US-Kingdom of Science",rk:"Wissenschaftler",ab:"Wissenschaft",ha:"Weiß",st:"Lebendig"},
+{n:"Suika",e:"🍉",a:"Dr. Stone",g:"Sci-Fi/Abenteuer",s:"f",h:130,ra:"Mensch",f:"Kingdom of Science",rk:"Detektivin",ab:"Lupen-Helm",ha:"Grün",st:"Lebendig"},
+// ASSASSINATION CLASSROOM
+{n:"Koro-sensei",e:"🐙",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:300,ra:"Experiment",f:"Klasse 3-E",rk:"Lehrer",ab:"Mach 20 Geschwindigkeit",ha:"Keine",st:"Tot"},
+{n:"Nagisa Shiota",e:"🔵",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:159,ra:"Mensch",f:"Klasse 3-E",rk:"Schüler",ab:"Unsichtbarer Killing Intent",ha:"Blau",st:"Lebendig"},
+{n:"Karma Akabane",e:"😈",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:175,ra:"Mensch",f:"Klasse 3-E",rk:"Schüler",ab:"Kampfkunst",ha:"Rot",st:"Lebendig"},
+{n:"Tadaomi Karasuma",e:"🎖️",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:183,ra:"Mensch",f:"Regierung",rk:"Beamter",ab:"Kampfkunst",ha:"Schwarz",st:"Lebendig"},
+{n:"Irina Jelavic",e:"💋",a:"Assassination Classroom",g:"Comedy/Action",s:"f",h:168,ra:"Mensch",f:"Klasse 3-E",rk:"Lehrerin",ab:"Verführung",ha:"Blond",st:"Lebendig"},
+{n:"Ryunosuke Chiba",e:"🎯",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:174,ra:"Mensch",f:"Klasse 3-E",rk:"Schüler",ab:"Scharfschütze",ha:"Schwarz",st:"Lebendig"},
+{n:"Rinka Hayami",e:"🎯",a:"Assassination Classroom",g:"Comedy/Action",s:"f",h:162,ra:"Mensch",f:"Klasse 3-E",rk:"Schülerin",ab:"Scharfschützin",ha:"Silber",st:"Lebendig"},
+{n:"Manami Okano",e:"🤸",a:"Assassination Classroom",g:"Comedy/Action",s:"f",h:155,ra:"Mensch",f:"Klasse 3-E",rk:"Schülerin",ab:"Akrobatik",ha:"Braun",st:"Lebendig"},
+{n:"Takuya Araki",e:"💻",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:166,ra:"Mensch",f:"Klasse 3-E",rk:"Schüler",ab:"Hacking",ha:"Braun",st:"Lebendig"},
+{n:"Yuma Isogai",e:"👑",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:173,ra:"Mensch",f:"Klasse 3-E",rk:"Klassensprecher",ab:"Führung",ha:"Braun",st:"Lebendig"},
+{n:"Gakuho Asano",e:"📚",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:178,ra:"Mensch",f:"Kunugigaoka",rk:"Schulleiter",ab:"Pädagogik",ha:"Schwarz",st:"Lebendig"},
+{n:"Gakushuu Asano",e:"⭐",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:173,ra:"Mensch",f:"Klasse 3-A",rk:"Antagonist",ab:"Intelligenz",ha:"Braun",st:"Lebendig"},
+{n:"Gastro",e:"🔫",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:175,ra:"Mensch",f:"Profi-Assassinen",rk:"Profi",ab:"Doppel-Pistolen",ha:"Schwarz",st:"Lebendig"},
+{n:"Smog",e:"☁️",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:172,ra:"Mensch",f:"Profi-Assassinen",rk:"Profi",ab:"Gift-Gas",ha:"Grau",st:"Lebendig"},
+{n:"Grip",e:"🤜",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:185,ra:"Mensch",f:"Profi-Assassinen",rk:"Profi",ab:"Hand-Kraft",ha:"Schwarz",st:"Lebendig"},
+{n:"Ritsu (KI)",e:"💻",a:"Assassination Classroom",g:"Comedy/Action",s:"f",h:100,ra:"KI",f:"Klasse 3-E",rk:"Schülerin",ab:"Waffensysteme",ha:"Keine",st:"Lebendig"},
+{n:"Hinano Kurahashi",e:"🌺",a:"Assassination Classroom",g:"Comedy/Action",s:"f",h:152,ra:"Mensch",f:"Klasse 3-E",rk:"Schülerin",ab:"Biologie",ha:"Braun",st:"Lebendig"},
+{n:"Tomohito Sugino",e:"⚾",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:170,ra:"Mensch",f:"Klasse 3-E",rk:"Schüler",ab:"Baseball",ha:"Braun",st:"Lebendig"},
+{n:"Okajima Taiga",e:"📷",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:163,ra:"Mensch",f:"Klasse 3-E",rk:"Schüler",ab:"Ablenkung",ha:"Schwarz",st:"Lebendig"},
+{n:"Lovro Brovski",e:"🎩",a:"Assassination Classroom",g:"Comedy/Action",s:"m",h:168,ra:"Mensch",f:"Keine",rk:"Lehrer-Assassin",ab:"Mord-Kunst",ha:"Grau",st:"Lebendig"},
+// BLACK CLOVER
+{n:"Asta",e:"⚔️",a:"Black Clover",g:"Action/Fantasy",s:"m",h:155,ra:"Mensch (kein Mana)",f:"Black Bulls",rk:"Zauberer-Ritter",ab:"Anti-Magie",ha:"Weiß",st:"Lebendig"},
+{n:"Yuno",e:"🌟",a:"Black Clover",g:"Action/Fantasy",s:"m",h:177,ra:"Mensch",f:"Golden Dawn",rk:"Vize-Anführer",ab:"Wind-Magie",ha:"Schwarz",st:"Lebendig"},
+{n:"Noelle Silva",e:"💧",a:"Black Clover",g:"Action/Fantasy",s:"f",h:163,ra:"Mensch",f:"Black Bulls",rk:"Zauberer-Ritterin",ab:"Wasser-Magie",ha:"Silber",st:"Lebendig"},
+{n:"Yami Sukehiro",e:"🌑",a:"Black Clover",g:"Action/Fantasy",s:"m",h:183,ra:"Mensch",f:"Black Bulls",rk:"Anführer",ab:"Dunkelheit-Magie",ha:"Schwarz",st:"Lebendig"},
+{n:"Julius Novachrono",e:"⏰",a:"Black Clover",g:"Action/Fantasy",s:"m",h:180,ra:"Mensch",f:"Zauberer-König",rk:"König",ab:"Zeit-Magie",ha:"Weiß",st:"Lebendig"},
+{n:"Magna Swing",e:"🔥",a:"Black Clover",g:"Action/Fantasy",s:"m",h:178,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Feuer-Magie",ha:"Rot",st:"Lebendig"},
+{n:"Luck Voltia",e:"⚡",a:"Black Clover",g:"Action/Fantasy",s:"m",h:162,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Blitz-Magie",ha:"Blond",st:"Lebendig"},
+{n:"Finral Roulacase",e:"🌀",a:"Black Clover",g:"Action/Fantasy",s:"m",h:174,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Raum-Magie",ha:"Braun",st:"Lebendig"},
+{n:"Gordon Agrippa",e:"☠️",a:"Black Clover",g:"Action/Fantasy",s:"m",h:190,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Gift-Magie",ha:"Weiß",st:"Lebendig"},
+{n:"Henry Legolant",e:"🏠",a:"Black Clover",g:"Action/Fantasy",s:"m",h:175,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Rekonfigurierungs-Magie",ha:"Weiß",st:"Lebendig"},
+{n:"Gauche Adlai",e:"🪞",a:"Black Clover",g:"Action/Fantasy",s:"m",h:176,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Spiegel-Magie",ha:"Grau",st:"Lebendig"},
+{n:"Charmy Pappitson",e:"🍖",a:"Black Clover",g:"Action/Fantasy",s:"f",h:149,ra:"Mensch/Zwerg",f:"Black Bulls",rk:"Mitglied",ab:"Nahrungs-Magie",ha:"Weiß",st:"Lebendig"},
+{n:"Vanessa Enoteca",e:"🐱",a:"Black Clover",g:"Action/Fantasy",s:"f",h:165,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Faden-Magie",ha:"Rosa",st:"Lebendig"},
+{n:"Secre Swallowtail",e:"🦅",a:"Black Clover",g:"Action/Fantasy",s:"f",h:153,ra:"Mensch",f:"Black Bulls",rk:"Mitglied",ab:"Siegel-Magie",ha:"Schwarz",st:"Lebendig"},
+{n:"Patry (Licht)",e:"✨",a:"Black Clover",g:"Action/Fantasy",s:"m",h:182,ra:"Elf",f:"Midnight Sun",rk:"Anführer",ab:"Licht-Magie",ha:"Blond",st:"Lebendig"},
+{n:"Megicula",e:"👿",a:"Black Clover",g:"Action/Fantasy",s:"f",h:170,ra:"Teufel",f:"Spade-Königreich",rk:"Teufel",ab:"Fluch-Magie",ha:"Lila",st:"Tot"},
+{n:"Liebe",e:"🖤",a:"Black Clover",g:"Action/Fantasy",s:"m",h:155,ra:"Teufel",f:"Astas Partner",rk:"Anti-Magie-Teufel",ab:"Anti-Magie",ha:"Weiß",st:"Lebendig"},
+{n:"Zenon Zogratis",e:"💀",a:"Black Clover",g:"Action/Fantasy",s:"m",h:181,ra:"Mensch/Teufel",f:"Dunkel-Triade",rk:"Triade-Mitglied",ab:"Knochen-Magie",ha:"Blond",st:"Tot"},
+{n:"Dante Zogratis",e:"💪",a:"Black Clover",g:"Action/Fantasy",s:"m",h:188,ra:"Mensch/Teufel",f:"Dunkel-Triade",rk:"Triade-Mitglied",ab:"Schwerkraft-Magie",ha:"Schwarz",st:"Tot"},
+{n:"Vanica Zogratis",e:"🩸",a:"Black Clover",g:"Action/Fantasy",s:"f",h:167,ra:"Mensch/Teufel",f:"Dunkel-Triade",rk:"Triade-Mitglied",ab:"Blut-Magie",ha:"Rosa",st:"Tot"},
+// TENSURA (THAT TIME I GOT REINCARNATED AS A SLIME)
+{n:"Rimuru Tempest",e:"💧",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:120,ra:"Schleim/Mensch",f:"Jura Tempest",rk:"Dämonenlord",ab:"Prädikat-Fähigkeit",ha:"Silber",st:"Lebendig"},
+{n:"Shion",e:"💜",a:"Tensura",g:"Fantasy/Isekai",s:"f",h:175,ra:"Oger",f:"Jura Tempest",rk:"Sekretärin",ab:"Kochkampf",ha:"Lila",st:"Lebendig"},
+{n:"Shuna",e:"🌸",a:"Tensura",g:"Fantasy/Isekai",s:"f",h:163,ra:"Oger",f:"Jura Tempest",rk:"Priesterin",ab:"Heilung",ha:"Rosa",st:"Lebendig"},
+{n:"Benimaru",e:"🔥",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:182,ra:"Oger",f:"Jura Tempest",rk:"General",ab:"Flammen-Magie",ha:"Rot",st:"Lebendig"},
+{n:"Souei",e:"🕵️",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:178,ra:"Oger",f:"Jura Tempest",rk:"Geheimdienstchef",ab:"Faden-Technik",ha:"Schwarz",st:"Lebendig"},
+{n:"Hakurou",e:"⚔️",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:175,ra:"Oger",f:"Jura Tempest",rk:"Krieger-Leiter",ab:"Schwertkampf",ha:"Weiß",st:"Lebendig"},
+{n:"Milim Nava",e:"💥",a:"Tensura",g:"Fantasy/Isekai",s:"f",h:145,ra:"Dämonenlord",f:"Keine",rk:"Dämonenlord",ab:"Zerstörungsgewitter",ha:"Rosa",st:"Lebendig"},
+{n:"Diablo",e:"🖤",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:185,ra:"Teufel",f:"Jura Tempest",rk:"Rimurus Diener",ab:"Fluch-Fähigkeit",ha:"Schwarz",st:"Lebendig"},
+{n:"Veldora Tempest",e:"🐉",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:350,ra:"Drache",f:"Jura Tempest",rk:"Sturm-Drache",ab:"Sturm-Magie",ha:"Keine",st:"Lebendig"},
+{n:"Ranga",e:"🐺",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:200,ra:"Sturm-Wolf",f:"Jura Tempest",rk:"Wachef",ab:"Sturm-Angriff",ha:"Keine",st:"Lebendig"},
+{n:"Gobta",e:"🧝",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:120,ra:"Hobgoblin",f:"Jura Tempest",rk:"Ritter",ab:"Zauber-Magie",ha:"Grün",st:"Lebendig"},
+{n:"Gabiru",e:"🦎",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:170,ra:"Dragonewt",f:"Jura Tempest",rk:"Dragonewt-Anführer",ab:"Drachen-Speer",ha:"Keine",st:"Lebendig"},
+{n:"Treyni",e:"🌿",a:"Tensura",g:"Fantasy/Isekai",s:"f",h:160,ra:"Dryade",f:"Jura-Wald",rk:"Hüterin",ab:"Wald-Magie",ha:"Grün",st:"Lebendig"},
+{n:"Fuze",e:"🏙️",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:175,ra:"Mensch",f:"Burlingam",rk:"Gildemeister",ab:"Taktik",ha:"Braun",st:"Lebendig"},
+{n:"Leon Cromwell",e:"👑",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:180,ra:"Dämonenlord",f:"Keine",rk:"Dämonenlord",ab:"Licht-Magie",ha:"Blond",st:"Lebendig"},
+{n:"Clayman",e:"🎭",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:172,ra:"Dämonenlord",f:"Keine",rk:"Dämonenlord",ab:"Marionetten-Magie",ha:"Braun",st:"Tot"},
+{n:"Luminous Valentine",e:"🌙",a:"Tensura",g:"Fantasy/Isekai",s:"f",h:158,ra:"Vampir",f:"Heilige Kirche",rk:"Dämonenlord",ab:"Heilig-Dunkel-Magie",ha:"Weiß",st:"Lebendig"},
+{n:"Carrion",e:"🦁",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:190,ra:"Beastmen",f:"Eurazania",rk:"Dämonenlord",ab:"Beastmen-Kraft",ha:"Keine",st:"Lebendig"},
+{n:"Frey",e:"🦅",a:"Tensura",g:"Fantasy/Isekai",s:"f",h:165,ra:"Harpy",f:"Keine",rk:"Dämonenlord",ab:"Flug-Magie",ha:"Blond",st:"Lebendig"},
+{n:"Guy Crimson",e:"🔴",a:"Tensura",g:"Fantasy/Isekai",s:"m",h:183,ra:"Teufel",f:"Keine",rk:"Ur-Dämonenlord",ab:"Feuer-Magie",ha:"Rot",st:"Lebendig"},
+// SEVEN DEADLY SINS
+{n:"Meliodas",e:"🐉",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:152,ra:"Dämonen-Prinz",f:"Sieben Todsünden",rk:"Anführer/Drachen-Sünde",ab:"Full Counter",ha:"Blond",st:"Lebendig"},
+{n:"Elizabeth Liones",e:"👑",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"f",h:166,ra:"Göttin",f:"Liones-Königreich",rk:"Prinzessin",ab:"Heilung",ha:"Silber",st:"Lebendig"},
+{n:"Ban",e:"🍺",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:240,ra:"Unsterblich",f:"Sieben Todsünden",rk:"Fuchs-Sünde",ab:"Snatch",ha:"Silber",st:"Lebendig"},
+{n:"King",e:"🐻",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:160,ra:"Fee",f:"Sieben Todsünden",rk:"Bären-Sünde",ab:"Chastiefol",ha:"Orange",st:"Lebendig"},
+{n:"Diane",e:"💪",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"f",h:915,ra:"Riesin",f:"Sieben Todsünden",rk:"Schlangen-Sünde",ab:"Creation",ha:"Braun",st:"Lebendig"},
+{n:"Gowther",e:"💙",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:160,ra:"Puppe",f:"Sieben Todsünden",rk:"Ziegen-Sünde",ab:"Invasion",ha:"Rosa",st:"Lebendig"},
+{n:"Merlin",e:"🔮",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"f",h:177,ra:"Mensch",f:"Sieben Todsünden",rk:"Eber-Sünde",ab:"Infinity",ha:"Schwarz",st:"Lebendig"},
+{n:"Escanor",e:"☀️",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:178,ra:"Mensch",f:"Sieben Todsünden",rk:"Löwen-Sünde",ab:"Sunshine",ha:"Orange",st:"Tot"},
+{n:"Hendrickson",e:"⚗️",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:185,ra:"Mensch",f:"Heilige Ritter",rk:"Großmeister",ab:"Zersetzung",ha:"Grau",st:"Lebendig"},
+{n:"Dreyfus",e:"🛡️",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:190,ra:"Mensch",f:"Heilige Ritter",rk:"Großmeister",ab:"Zertrümmerung",ha:"Schwarz",st:"Lebendig"},
+{n:"Helbram",e:"🌿",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:170,ra:"Fee",f:"Heilige Ritter",rk:"Ritter",ab:"Link",ha:"Grün",st:"Tot"},
+{n:"Fraudrin",e:"💀",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:190,ra:"Dämon",f:"Zehn Gebote",rk:"Gula",ab:"Körper-Übernahme",ha:"Keine",st:"Tot"},
+{n:"Estarossa",e:"🖤",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:210,ra:"Engel/Dämon",f:"Zehn Gebote",rk:"Liebe",ab:"Full Counter",ha:"Schwarz",st:"Lebendig"},
+{n:"Zeldris",e:"🐉",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:167,ra:"Dämon",f:"Zehn Gebote",rk:"Pietät",ab:"Gottes Fluch",ha:"Schwarz",st:"Lebendig"},
+{n:"Demon King",e:"👹",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:300,ra:"Ur-Dämon",f:"Dämonenreich",rk:"Dämonenkönig",ab:"The Ruler",ha:"Keine",st:"Tot"},
+{n:"Supreme Deity",e:"✨",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"f",h:250,ra:"Ur-Göttin",f:"Götterreich",rk:"Göttin",ab:"Göttliche Gnade",ha:"Weiß",st:"Tot"},
+{n:"Gilthunder",e:"⚡",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:185,ra:"Mensch",f:"Heilige Ritter",rk:"Silberne Ritter",ab:"Blitz-Magie",ha:"Blond",st:"Lebendig"},
+{n:"Howzer",e:"🌪️",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"m",h:182,ra:"Mensch",f:"Heilige Ritter",rk:"Heiliger Ritter",ab:"Tornado",ha:"Blond",st:"Lebendig"},
+{n:"Elaine",e:"🧚",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"f",h:148,ra:"Fee",f:"Feenwald",rk:"Hüterin",ab:"Wind-Magie",ha:"Blond",st:"Lebendig"},
+{n:"Jericho",e:"🗡️",a:"Seven Deadly Sins",g:"Action/Fantasy",s:"f",h:163,ra:"Mensch",f:"Heilige Ritter",rk:"Silberne Ritterin",ab:"Eis-Magie",ha:"Schwarz",st:"Lebendig"},
+// RECORD OF RAGNAROK
+{n:"Thor",e:"⚡",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:200,ra:"Gottheit",f:"Götter",rk:"Gott des Donners",ab:"Mjolnir",ha:"Rot",st:"Lebendig"},
+{n:"Lu Bu",e:"⚔️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:195,ra:"Mensch",f:"Menschen",rk:"Stärkster Mensch",ab:"Sky Eater",ha:"Schwarz",st:"Tot"},
+{n:"Adam",e:"🌿",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:180,ra:"Mensch",f:"Menschen",rk:"Erster Mensch",ab:"Göttliche Kopie",ha:"Braun",st:"Tot"},
+{n:"Zeus",e:"☁️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:170,ra:"Gottheit",f:"Götter",rk:"König der Götter",ab:"Adamas",ha:"Weiß",st:"Lebendig"},
+{n:"Sasaki Kojiro",e:"🗡️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:183,ra:"Mensch",f:"Menschen",rk:"Ewiger Verlierer",ab:"Ganryu",ha:"Schwarz",st:"Tot"},
+{n:"Poseidon",e:"🌊",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:185,ra:"Gottheit",f:"Götter",rk:"Gott des Meeres",ab:"Trident",ha:"Blau",st:"Tot"},
+{n:"Jack the Ripper",e:"🔪",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:178,ra:"Mensch",f:"Menschen",rk:"Serienmörder",ab:"A-Un",ha:"Schwarz",st:"Lebendig"},
+{n:"Hercules",e:"💪",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:210,ra:"Gottheit",f:"Götter",rk:"Halbgott",ab:"Ura",ha:"Blond",st:"Tot"},
+{n:"Raiden Tameemon",e:"💪",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:227,ra:"Mensch",f:"Menschen",rk:"Yokozuna",ab:"Volts",ha:"Keine",st:"Tot"},
+{n:"Shiva",e:"💃",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:175,ra:"Gottheit",f:"Götter",rk:"Zerstörungs-Gott",ab:"Tandava Karma",ha:"Blau",st:"Lebendig"},
+{n:"Nikola Tesla",e:"⚡",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:188,ra:"Mensch",f:"Menschen",rk:"Erfinder",ab:"Godforsaken Lightning",ha:"Braun",st:"Tot"},
+{n:"Beelzebub",e:"🪰",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:180,ra:"Gottheit",f:"Götter",rk:"Fliegenkönig",ab:"Gluttony",ha:"Schwarz",st:"Lebendig"},
+{n:"Brunhilde",e:"⚔️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"f",h:175,ra:"Walküre",f:"Walküren",rk:"Anführerin",ab:"Strategie",ha:"Silber",st:"Lebendig"},
+{n:"Göll",e:"🌸",a:"Record of Ragnarok",g:"Action/Fantasy",s:"f",h:155,ra:"Walküre",f:"Walküren",rk:"Jüngste Walküre",ab:"Unterstützung",ha:"Pink",st:"Lebendig"},
+{n:"Reginleif",e:"🍷",a:"Record of Ragnarok",g:"Action/Fantasy",s:"f",h:165,ra:"Walküre",f:"Walküren",rk:"Walküre",ab:"Thrud Gear",ha:"Rot",st:"Tot"},
+{n:"Randgriz",e:"🌙",a:"Record of Ragnarok",g:"Action/Fantasy",s:"f",h:170,ra:"Walküre",f:"Walküren",rk:"Walküre",ab:"Nibelung",ha:"Silber",st:"Tot"},
+{n:"Hrist",e:"⚔️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"f",h:173,ra:"Walküre",f:"Walküren",rk:"Walküre",ab:"Dual Valkyrie",ha:"Silber",st:"Lebendig"},
+{n:"Buddha",e:"☯️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:178,ra:"Gottheit",f:"Menschen-Seite",rk:"Erleuchteter",ab:"Vajra",ha:"Keine",st:"Lebendig"},
+{n:"Leonidas",e:"🛡️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:188,ra:"Mensch",f:"Menschen",rk:"König von Sparta",ab:"Spartanischer Schild",ha:"Braun",st:"Tot"},
+{n:"Apollo",e:"☀️",a:"Record of Ragnarok",g:"Action/Fantasy",s:"m",h:180,ra:"Gottheit",f:"Götter",rk:"Sonnengott",ab:"Phoebus",ha:"Blond",st:"Lebendig"},
+// AVATAR (Der Herr der Elemente)
+{n:"Aang",e:"🌪️",a:"Avatar",g:"Action/Fantasy",s:"m",h:163,ra:"Mensch/Avatar",f:"Luftnomaden",rk:"Avatar",ab:"Alle vier Elemente",ha:"Keine",st:"Tot"},
+{n:"Katara",e:"💧",a:"Avatar",g:"Action/Fantasy",s:"f",h:165,ra:"Mensch",f:"Wasserstamm Süd",rk:"Meister",ab:"Wasserbiegen",ha:"Braun",st:"Lebendig"},
+{n:"Sokka",e:"🪃",a:"Avatar",g:"Action/Fantasy",s:"m",h:170,ra:"Mensch",f:"Wasserstamm Süd",rk:"Krieger",ab:"Bumerang/Strategie",ha:"Braun",st:"Tot"},
+{n:"Toph Beifong",e:"🪨",a:"Avatar",g:"Action/Fantasy",s:"f",h:152,ra:"Mensch",f:"Ba Sing Se",rk:"Erdbiege-Meisterin",ab:"Metallbiegen",ha:"Schwarz",st:"Lebendig"},
+{n:"Zuko",e:"🔥",a:"Avatar",g:"Action/Fantasy",s:"m",h:176,ra:"Mensch",f:"Feuernation",rk:"Feuerlord",ab:"Feuerbiegen",ha:"Schwarz",st:"Lebendig"},
+{n:"Iroh",e:"🍵",a:"Avatar",g:"Action/Fantasy",s:"m",h:175,ra:"Mensch",f:"Feuernation",rk:"General",ab:"Feuerbiegen",ha:"Keine",st:"Lebendig"},
+{n:"Azula",e:"⚡",a:"Avatar",g:"Action/Fantasy",s:"f",h:165,ra:"Mensch",f:"Feuernation",rk:"Prinzessin",ab:"Blauer Blitz",ha:"Schwarz",st:"Lebendig"},
+{n:"Ozai",e:"🔥",a:"Avatar",g:"Action/Fantasy",s:"m",h:182,ra:"Mensch",f:"Feuernation",rk:"Feuerlord",ab:"Feuerbiegen",ha:"Schwarz",st:"Lebendig"},
+{n:"Mai",e:"🗡️",a:"Avatar",g:"Action/Fantasy",s:"f",h:163,ra:"Mensch",f:"Feuernation",rk:"Zukos Freundin",ab:"Messer-Werfen",ha:"Schwarz",st:"Lebendig"},
+{n:"Ty Lee",e:"🤸",a:"Avatar",g:"Action/Fantasy",s:"f",h:158,ra:"Mensch",f:"Feuernation",rk:"Akrobatin",ab:"Chi-Blockade",ha:"Braun",st:"Lebendig"},
+{n:"Suki",e:"🥷",a:"Avatar",g:"Action/Fantasy",s:"f",h:160,ra:"Mensch",f:"Kyoshi-Kriegerin",rk:"Anführerin",ab:"Kyoshi-Kampfkunst",ha:"Braun",st:"Lebendig"},
+{n:"Wan Shi Tong",e:"🦉",a:"Avatar",g:"Action/Fantasy",s:"m",h:250,ra:"Geist",f:"Wissens-Geister",rk:"Geist des Wissens",ab:"Geisterkraft",ha:"Keine",st:"Lebendig"},
+{n:"Yue",e:"🌙",a:"Avatar",g:"Action/Fantasy",s:"f",h:162,ra:"Mensch/Geist",f:"Wasserstamm Nord",rk:"Prinzessin",ab:"Mondgeist",ha:"Weiß",st:"Tot"},
+{n:"Bumi",e:"🪨",a:"Avatar",g:"Action/Fantasy",s:"m",h:170,ra:"Mensch",f:"Omashu",rk:"König",ab:"Erdbiegen",ha:"Keine",st:"Lebendig"},
+{n:"Roku",e:"🌋",a:"Avatar",g:"Action/Fantasy",s:"m",h:178,ra:"Mensch/Avatar",f:"Feuernation",rk:"Avatar",ab:"Alle vier Elemente",ha:"Keine",st:"Tot"},
+{n:"Kyoshi",e:"🎭",a:"Avatar",g:"Action/Fantasy",s:"f",h:210,ra:"Mensch/Avatar",f:"Erdkönigreich",rk:"Avatar",ab:"Alle vier Elemente",ha:"Schwarz",st:"Tot"},
+{n:"Pakku",e:"🌊",a:"Avatar",g:"Action/Fantasy",s:"m",h:172,ra:"Mensch",f:"Wasserstamm Nord",rk:"Wasserbiege-Meister",ab:"Wasserbiegen",ha:"Weiß",st:"Lebendig"},
+{n:"Longshot",e:"🏹",a:"Avatar",g:"Action/Fantasy",s:"m",h:171,ra:"Mensch",f:"Kyoshi-Krieger",rk:"Krieger",ab:"Bogenschießen",ha:"Schwarz",st:"Lebendig"},
+{n:"Smellerbee",e:"🗡️",a:"Avatar",g:"Action/Fantasy",s:"f",h:155,ra:"Mensch",f:"Kyoshi-Krieger",rk:"Kriegerin",ab:"Dolch",ha:"Braun",st:"Lebendig"},
+{n:"The Cabbage Man",e:"🥬",a:"Avatar",g:"Action/Fantasy",s:"m",h:165,ra:"Mensch",f:"Erdkönigreich",rk:"Händler",ab:"Kohlhandel",ha:"Keine",st:"Lebendig"},
+// SOLO LEVELING
+{n:"Sung Jinwoo",e:"🗡️",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:183,ra:"Mensch/Schatten-Monarch",f:"Koreanische Jäger",rk:"S-Rang Jäger",ab:"Schattenheer-Extraktion",ha:"Schwarz",st:"Lebendig"},
+{n:"Cha Hae-In",e:"⚔️",a:"Solo Leveling",g:"Action/Fantasy",s:"f",h:168,ra:"Mensch",f:"Koreanische Jäger",rk:"S-Rang Jägerin",ab:"Schwertkampf",ha:"Blond",st:"Lebendig"},
+{n:"Go Gunhee",e:"👴",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:172,ra:"Mensch",f:"Hunter-Verband Korea",rk:"Vorsitzender",ab:"Führung",ha:"Weiß",st:"Tot"},
+{n:"Yoo Jinho",e:"💼",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:175,ra:"Mensch",f:"Jinwoos Gilde",rk:"Vize-Gildemeister",ab:"Geldkraft",ha:"Braun",st:"Lebendig"},
+{n:"Choi Jong-In",e:"🔥",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:178,ra:"Mensch",f:"Korean. Jäger",rk:"S-Rang Jäger",ab:"Feuer-Magie",ha:"Schwarz",st:"Lebendig"},
+{n:"Baek Yoonho",e:"🐅",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:192,ra:"Mensch",f:"Korean. Jäger",rk:"S-Rang Jäger",ab:"Tiger-Verwandlung",ha:"Weiß",st:"Lebendig"},
+{n:"Beru",e:"🐜",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:175,ra:"Schatten-Soldat",f:"Jinwoos Schattenarmee",rk:"Marschall",ab:"Insekten-Gift",ha:"Keine",st:"Lebendig"},
+{n:"Igris",e:"🛡️",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:185,ra:"Schatten-Soldat",f:"Jinwoos Schattenarmee",rk:"Ritter",ab:"Schwertkampf",ha:"Keine",st:"Lebendig"},
+{n:"Thomas Andre",e:"💪",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:230,ra:"Mensch",f:"US-Jäger",rk:"Nationaler S-Rang",ab:"Unverwundbarkeit",ha:"Keine",st:"Lebendig"},
+{n:"Christopher Reed",e:"⚡",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:185,ra:"Mensch",f:"US-Jäger",rk:"Nationaler S-Rang",ab:"Blitz",ha:"Blond",st:"Tot"},
+{n:"Liu Zhigang",e:"🐉",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:180,ra:"Mensch",f:"Chinesische Jäger",rk:"Nationaler S-Rang",ab:"Feuerdrachen",ha:"Schwarz",st:"Lebendig"},
+{n:"Goto Ryuji",e:"🗡️",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:180,ra:"Mensch",f:"Japanische Jäger",rk:"Nationaler S-Rang",ab:"Schwertkampf",ha:"Schwarz",st:"Tot"},
+{n:"Sung Il-Hwan",e:"⚔️",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:180,ra:"Mensch",f:"Monarch-Überlebende",rk:"Nationaler Jäger",ab:"Monarch-Kraft",ha:"Schwarz",st:"Tot"},
+{n:"Monarch of Frost",e:"❄️",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:185,ra:"Monarch",f:"Monarchen",rk:"Frost-Monarch",ab:"Eis-Magie",ha:"Weiß",st:"Tot"},
+{n:"Monarch of Destruction",e:"💥",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:190,ra:"Monarch",f:"Monarchen",rk:"Zerstörungs-Monarch",ab:"Zerstörung",ha:"Schwarz",st:"Tot"},
+{n:"Ruler Ashborn",e:"🖤",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:195,ra:"Schatten-Monarch",f:"Herrscher",rk:"Schatten-Monarch",ab:"Schatten-Heer",ha:"Schwarz",st:"Tot"},
+{n:"Sung Jinah",e:"🌸",a:"Solo Leveling",g:"Action/Fantasy",s:"f",h:163,ra:"Mensch",f:"Jinahs Familie",rk:"Schwester",ab:"Keine",ha:"Schwarz",st:"Lebendig"},
+{n:"Park Kyung-Hye",e:"💊",a:"Solo Leveling",g:"Action/Fantasy",s:"f",h:162,ra:"Mensch",f:"Jinahs Familie",rk:"Mutter",ab:"Keine",ha:"Schwarz",st:"Lebendig"},
+{n:"Hwang Dongsoo",e:"💢",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:195,ra:"Mensch",f:"US-Jäger",rk:"S-Rang Jäger",ab:"Körperkraft",ha:"Schwarz",st:"Tot"},
+{n:"Min Byung-Gu",e:"💊",a:"Solo Leveling",g:"Action/Fantasy",s:"m",h:168,ra:"Mensch",f:"Korean. Jäger",rk:"S-Rang Heiler",ab:"Heilung",ha:"Braun",st:"Tot"},
+// CYBERPUNK EDGERUNNERS
+{n:"David Martinez",e:"🦾",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:175,ra:"Mensch/Cyborg",f:"Edgerunners",rk:"Edgerunner",ab:"Sandevistan",ha:"Schwarz",st:"Tot"},
+{n:"Lucy (Lucía)",e:"💻",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:165,ra:"Mensch/Netrunner",f:"Edgerunners",rk:"Netrunner",ab:"Brain-Hacking",ha:"Weiß",st:"Lebendig"},
+{n:"Maine",e:"💥",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:195,ra:"Mensch/Cyborg",f:"Edgerunners",rk:"Anführer",ab:"Gorilla Arms",ha:"Keine",st:"Tot"},
+{n:"Rebecca",e:"🔫",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:147,ra:"Mensch/Cyborg",f:"Edgerunners",rk:"Angreiferin",ab:"Shotgun-Barrage",ha:"Blond",st:"Tot"},
+{n:"Dorio",e:"🛡️",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:190,ra:"Mensch/Cyborg",f:"Edgerunners",rk:"Verteidigerin",ab:"Subdermal-Panzer",ha:"Keine",st:"Tot"},
+{n:"Kiwi",e:"💚",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:170,ra:"Mensch/Netrunner",f:"Edgerunners",rk:"Netrunner",ab:"Hacking",ha:"Grün",st:"Tot"},
+{n:"Pilar",e:"🎭",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:168,ra:"Mensch/Cyborg",f:"Edgerunners",rk:"Mitglied",ab:"Cyber-Klingen",ha:"Keine",st:"Tot"},
+{n:"Falco",e:"⚡",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:172,ra:"Mensch/Cyborg",f:"Edgerunners",rk:"Fahrer",ab:"Sandevistan",ha:"Braun",st:"Lebendig"},
+{n:"Tanaka",e:"🔪",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:175,ra:"Mensch",f:"Arasaka",rk:"Militärtech",ab:"Arasaka-Technik",ha:"Schwarz",st:"Tot"},
+{n:"Faraday",e:"🎩",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:180,ra:"Mensch",f:"Militech",rk:"Fixer",ab:"Manipulation",ha:"Braun",st:"Tot"},
+{n:"Shannon",e:"🔫",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:165,ra:"Mensch/Cyborg",f:"Edgerunners (Maine)",rk:"Mitglied",ab:"Schusswaffen",ha:"Orange",st:"Tot"},
+{n:"Gloria Martinez",e:"💊",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:163,ra:"Mensch",f:"Night City",rk:"Mutter",ab:"Medizin",ha:"Schwarz",st:"Tot"},
+{n:"Arasaka Doctor",e:"🧬",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:170,ra:"Mensch",f:"Arasaka",rk:"Militärarzt",ab:"Medizin",ha:"Schwarz",st:"Lebendig"},
+{n:"Warden",e:"⚙️",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:183,ra:"Mensch/Cyborg",f:"Arasaka",rk:"Wächter",ab:"Cyborg-Kraft",ha:"Keine",st:"Tot"},
+{n:"Sasha",e:"💀",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:162,ra:"Mensch/Cyborg",f:"Night City",rk:"Kämpferin",ab:"Mantis-Klingen",ha:"Rot",st:"Tot"},
+{n:"Jimmy Kurosaki",e:"🎭",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:170,ra:"Mensch",f:"Night City",rk:"Fixer",ab:"Netzwerk",ha:"Schwarz",st:"Lebendig"},
+{n:"Lyle",e:"🔧",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:175,ra:"Mensch/Cyborg",f:"Night City",rk:"Techniker",ab:"Reparatur",ha:"Braun",st:"Lebendig"},
+{n:"Night City AI",e:"🤖",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:0,ra:"KI",f:"Night City Net",rk:"KI-Entität",ab:"Netz-Kontrolle",ha:"Keine",st:"Lebendig"},
+{n:"Spider Murphy",e:"🕷️",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"f",h:163,ra:"Mensch/Netrunner",f:"Night City",rk:"Netrunner",ab:"Spider-Rig",ha:"Blau",st:"Lebendig"},
+{n:"Adam Smasher",e:"🤖",a:"Cyberpunk Edgerunners",g:"Sci-Fi/Action",s:"m",h:240,ra:"Full-Cyborg",f:"Arasaka",rk:"Söldner",ab:"Railgun",ha:"Keine",st:"Lebendig"},
+// INAZUMA ELEVEN (Kickers)
+{n:"Endou Mamoru",e:"🧤",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:168,ra:"Mensch",f:"Raimon",rk:"Kapitän",ab:"God Hand",ha:"Braun",st:"Lebendig"},
+{n:"Gouenji Shuuya",e:"🔥",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:175,ra:"Mensch",f:"Raimon",rk:"Stürmer",ab:"Fire Tornado",ha:"Weiß",st:"Lebendig"},
+{n:"Kidou Yuuto",e:"🥽",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:167,ra:"Mensch",f:"Raimon",rk:"Mittelfeld",ab:"Emperor Penguin",ha:"Schwarz",st:"Lebendig"},
+{n:"Fubuki Shirou",e:"❄️",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:171,ra:"Mensch",f:"Raimon",rk:"Verteidiger",ab:"Eternal Blizzard",ha:"Weiß",st:"Lebendig"},
+{n:"Kazemaru Ichirouta",e:"🌪️",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:169,ra:"Mensch",f:"Raimon",rk:"Verteidiger",ab:"Shippu Dash",ha:"Braun",st:"Lebendig"},
+{n:"Toramaru Utsunomiya",e:"🐯",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:162,ra:"Mensch",f:"Raimon",rk:"Stürmer",ab:"Tiger Drive",ha:"Orange",st:"Lebendig"},
+{n:"Tsunami Jousuke",e:"🌊",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:175,ra:"Mensch",f:"Raimon",rk:"Verteidiger",ab:"Tsuna Boost",ha:"Braun",st:"Lebendig"},
+{n:"Nagumo Haruya",e:"☀️",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:178,ra:"Mensch",f:"Gemini Storm",rk:"Stürmer",ab:"Prominence",ha:"Orange",st:"Lebendig"},
+{n:"Ryugel",e:"🐉",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:180,ra:"Mensch",f:"Chaos",rk:"Kapitän",ab:"Dragon Crash",ha:"Rot",st:"Lebendig"},
+{n:"Aliea Gakuen",e:"👽",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:170,ra:"Mensch (alien-Impostor)",f:"Aliea Gakuen",rk:"Spieler",ab:"Aliea-Meteorit",ha:"Silber",st:"Lebendig"},
+{n:"Hiroto Kiyama",e:"🌟",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:172,ra:"Mensch",f:"Raimon",rk:"Mittelfeld",ab:"Tenkuu Otoshi",ha:"Silber",st:"Lebendig"},
+{n:"Midorikawa Ryuuji",e:"🌿",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:166,ra:"Mensch",f:"Gemini Storm",rk:"Mittelfeld",ab:"Rolling Thunder",ha:"Grün",st:"Lebendig"},
+{n:"Gazelle (Daisuke Endou)",e:"🦌",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:175,ra:"Mensch",f:"Big Wave",rk:"Stürmer",ab:"Devil's Snipe",ha:"Silber",st:"Lebendig"},
+{n:"Aphrodi",e:"💫",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:178,ra:"Mensch",f:"Zeus",rk:"Angreifer",ab:"Heaven's Time",ha:"Blond",st:"Lebendig"},
+{n:"Ichinose Kazuya",e:"🎸",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:172,ra:"Mensch",f:"Raimon",rk:"Mittelfeld",ab:"Rhythm Tackle",ha:"Schwarz",st:"Lebendig"},
+{n:"Domon Asuka",e:"💥",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:170,ra:"Mensch",f:"Raimon",rk:"Verteidiger",ab:"Inazuma Break",ha:"Braun",st:"Lebendig"},
+{n:"Kabeyama Heigorou",e:"🏔️",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:178,ra:"Mensch",f:"Raimon",rk:"Verteidiger",ab:"The Wall",ha:"Braun",st:"Lebendig"},
+{n:"Kurimatsu Teppei",e:"🐛",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:160,ra:"Mensch",f:"Raimon",rk:"Mittelfeld",ab:"Worm Scope",ha:"Braun",st:"Lebendig"},
+{n:"Someoka Ryuugo",e:"🐉",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:174,ra:"Mensch",f:"Raimon",rk:"Stürmer",ab:"Dragon Crash",ha:"Rot",st:"Lebendig"},
+{n:"Fideo Ardena",e:"🍝",a:"Inazuma Eleven",g:"Sport/Abenteuer",s:"m",h:175,ra:"Mensch",f:"Orpheus",rk:"Stürmer",ab:"Spaghetti",ha:"Schwarz",st:"Lebendig"},
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let playerName='', target=null, guesses=[], won=false, lost=false;
 let revealedHints=[], hintsUsed=[], selectedChar=null;
 let leaderboard={}, lbSha='';
+
+
+// ── ANIME LIST ────────────────────────────────────────────────────────────────
+function buildAnimeList(){
+  const counts={};
+  const emojis={};
+  C.forEach(c=>{
+    counts[c.a]=(counts[c.a]||0)+1;
+    if(!emojis[c.a]) emojis[c.a]=c.e;
+  });
+  const sorted=Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0]));
+  const animeEmojis={
+    'Naruto':'🍥','One Piece':'⛵','Dragon Ball Z':'🔵','Bleach':'🌙',
+    'Attack on Titan':'⚔️','Hunter x Hunter':'🎣','Demon Slayer':'🌊',
+    'My Hero Academia':'💚','Fullmetal Alchemist':'⚗️','Death Note':'📓',
+    'Haikyuu':'🏐','Kuroko no Basket':'🏀','Blue Lock':'⚽','Chainsaw Man':'⛓️',
+    'Akame ga Kill':'⚔️','Fire Force':'🔥','Soul Eater':'💀','Fairy Tail':'✨',
+    'Frieren':'🌿','JoJo\'s Biz. Adv.':'🌺','One Punch Man':'👊',
+    'Mob Psycho 100':'😶','Code Geass':'♟️','Berserk':'⚔️','Pokémon':'⚡',
+    'Jujutsu Kaisen':'🥷','Sword Art Online':'🗡️','Yu-Gi-Oh!':'🃏',
+    'KonoSuba':'💥','Dr. Stone':'🧪','Assassination Classroom':'🐙',
+    'Black Clover':'⚔️','Tensura':'💧','Seven Deadly Sins':'🐉',
+    'Record of Ragnarok':'⚡','Avatar':'🌪️','Solo Leveling':'🗡️',
+    'Cyberpunk Edgerunners':'🦾','Inazuma Eleven':'🧤'
+  };
+  document.getElementById('animeGrid').innerHTML=sorted.map(([name,count])=>`
+    <div class="anime-item">
+      <span class="anime-emoji">${animeEmojis[name]||'🎌'}</span>
+      <div class="anime-info">
+        <div class="anime-name">${name}</div>
+        <div class="anime-count">${count} Charaktere</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleAnimeList(){
+  const m=document.getElementById('animeModal');
+  if(!m.classList.contains('open')){
+    buildAnimeList();
+    m.classList.add('open');
+  } else {
+    m.classList.remove('open');
+  }
+}
 
 // ── GITHUB LEADERBOARD API ────────────────────────────────────────────────────
 async function loadLb(showToast=false) {
