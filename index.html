@@ -203,7 +203,10 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
         <div id="nameErr" class="err" style="display:none"></div>
-        <button class="btn-primary" onclick="joinGame()">SPIELEN →</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+          <button class="btn-primary" onclick="joinGame('endless')" style="background:linear-gradient(135deg,#E040FB,#00E5FF)">♾️ ENDLOS</button>
+          <button class="btn-primary" onclick="joinGame('daily')" style="background:linear-gradient(135deg,#e6a817,#ff6b35)">📅 TÄGLICH</button>
+        </div>
       </div>
       <div class="lb-preview" id="lbPreview" style="display:none">
         <div class="lb-title">🏆 LEADERBOARD</div>
@@ -217,9 +220,10 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
 <div id="gameScreen" class="screen">
   <header>
     <div class="header-logo">Anime<span style="font-weight:400">Guess</span></div>
-    <div class="header-sub">Pokédle-Style · Multiplayer</div>
+    <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
+      <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
       <button class="btn-icon" id="lbBtn" onclick="toggleLb()">🏆</button>
       <button class="btn-icon" onclick="backToName()" style="color:var(--muted)">↩</button>
     </div>
@@ -232,6 +236,16 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
       <span>· 🔥 Streak: <b id="statsStreak" style="color:var(--text)">0</b></span>
       <span>· Best: <b id="statsBest" style="color:var(--text)">0</b></span>
       <span>· <b id="statsWins" style="color:var(--correct)">0</b>W / <b id="statsLosses" style="color:var(--wrong)">0</b>L</span>
+    </div>
+
+
+    <!-- DAILY LEADERBOARD PANEL -->
+    <div class="lb-panel" id="dailyLbPanel">
+      <div class="lb-panel-header">
+        <div class="lb-panel-title">📅 TAGES-LEADERBOARD — <span id="dailyDateLabel"></span></div>
+        <button class="btn-refresh" onclick="loadDailyLb(true)">↻ Aktualisieren</button>
+      </div>
+      <div id="dailyLbRows"><div style="color:var(--muted);text-align:center;font-size:.8rem">Lädt...</div></div>
     </div>
 
     <!-- LEADERBOARD PANEL -->
@@ -359,6 +373,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
 const GITHUB_TOKEN = ['ghp_g0Fu1qazXgsLP4I','tjJraR3KS9XeHe51f5BLL'].join('');
 const GITHUB_REPO  = 'ant1chr1s/animeguess';
 const LB_FILE      = 'leaderboard.json';
+const DAILY_LB_FILE = 'leaderboard-daily.json';
 const MAX_GUESSES  = 40;
 const HINT_AT      = [10, 25];
 const COL_KEYS     = ['a','g','s','h','ra','f','rk','ab','ha','st'];
@@ -1456,7 +1471,7 @@ const C=[
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let playerName='', target=null, guesses=[], won=false, lost=false;
+let playerName='', target=null, guesses=[], won=false, lost=false, gameMode='endless';
 let revealedHints=[], hintsUsed=[], selectedChar=null;
 let leaderboard={}, lbSha='';
 
@@ -1578,7 +1593,15 @@ function getStats(name) {
 }
 
 async function recordResult(didWin, attempts) {
-  // Re-fetch first to avoid overwriting concurrent changes
+  if(gameMode==='daily'){
+    // Save to localStorage so user can't replay today
+    const todayKey = 'daily_played_' + getDailyDateStr();
+    localStorage.setItem(todayKey, JSON.stringify({won:didWin, attempts, gave_up:!didWin}));
+    // Save to daily leaderboard
+    await recordDailyResult(didWin, attempts);
+    return;
+  }
+  // Endless mode - update normal leaderboard
   await loadLb();
   const prev = getStats(playerName);
   const newStreak = didWin ? prev.streak+1 : 0;
@@ -1591,6 +1614,86 @@ async function recordResult(didWin, attempts) {
   await saveLb();
   updateStatsBar();
   renderLb();
+}
+
+// ── DAILY LEADERBOARD ─────────────────────────────────────────────────────────
+let dailyLeaderboard = {}, dailyLbSha = '';
+
+async function loadDailyLb(showToast=false) {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${DAILY_LB_FILE}`,{
+      headers:{'Authorization':'token '+GITHUB_TOKEN,'Accept':'application/vnd.github.v3+json'}
+    });
+    const d = await r.json();
+    dailyLbSha = d.sha;
+    dailyLeaderboard = JSON.parse(atob(d.content.replace(/\n/g,''))).leaderboard || {};
+    renderDailyLb();
+    if(showToast) toast('Tages-Leaderboard aktualisiert!');
+  } catch(e) { dailyLeaderboard = {}; }
+}
+
+async function saveDailyLb() {
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify({leaderboard:dailyLeaderboard}))));
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${DAILY_LB_FILE}`,{
+      method:'PUT',
+      headers:{'Authorization':'token '+GITHUB_TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'update daily leaderboard',content,sha:dailyLbSha})
+    });
+    const d = await r.json();
+    if(d.content) dailyLbSha = d.content.sha;
+  } catch(e) { console.error('Daily LB save error',e); }
+}
+
+async function recordDailyResult(didWin, attempts) {
+  await loadDailyLb();
+  const dateStr = getDailyDateStr();
+  if(!dailyLeaderboard[dateStr]) dailyLeaderboard[dateStr] = {};
+  if(didWin){
+    dailyLeaderboard[dateStr][playerName] = { attempts, won:true };
+  } else {
+    dailyLeaderboard[dateStr][playerName] = { attempts, won:false };
+  }
+  await saveDailyLb();
+  renderDailyLb();
+}
+
+function renderDailyLb() {
+  const dateStr = getDailyDateStr();
+  document.getElementById('dailyDateLabel').textContent = dateStr;
+  const todayData = dailyLeaderboard[dateStr] || {};
+  const rows = Object.entries(todayData)
+    .filter(([,v])=>v.won)
+    .sort((a,b)=>a[1].attempts - b[1].attempts);
+  const medals=['🥇','🥈','🥉'];
+  const char = getDailyChar();
+  let html = `<div style="text-align:center;margin-bottom:10px;font-size:.8rem;color:var(--muted)">Heutiger Charakter: <b style="color:var(--text)">${char.e} ${char.n}</b> · ${char.a}</div>`;
+  if(rows.length===0){
+    html += '<div style="color:var(--muted);text-align:center;font-size:.8rem">Noch niemand hat heute gewonnen!</div>';
+  } else {
+    html += rows.map(([name,s],i)=>`
+      <div class="lb-entry ${name===playerName?'me':''}">
+        <div class="lb-entry-left">
+          <span class="lb-entry-rank">${medals[i]||`${i+1}.`}</span>
+          <span class="lb-entry-name ${name===playerName?'me':''}">${name}</span>
+        </div>
+        <div class="lb-entry-right">
+          <span>🎯 <b style="color:var(--correct)">${s.attempts}</b> Versuch${s.attempts===1?'':'e'}</span>
+        </div>
+      </div>`).join('');
+  }
+  // Add losers below
+  const losers = Object.entries(todayData).filter(([,v])=>!v.won);
+  if(losers.length>0){
+    html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted)">Aufgegeben: ${losers.map(([n])=>n).join(', ')}</div>`;
+  }
+  document.getElementById('dailyLbRows').innerHTML = html;
+}
+
+function toggleDailyLb(){
+  const p=document.getElementById('dailyLbPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) loadDailyLb();
 }
 
 // ── RENDER LEADERBOARD ────────────────────────────────────────────────────────
@@ -1635,16 +1738,40 @@ function showScreen(id){
   document.getElementById(id).classList.add('active');
 }
 
-function joinGame(){
+function getDailyDateStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDailyChar(){
+  // Deterministic daily character based on date seed
+  const dateStr = getDailyDateStr();
+  let hash = 0;
+  for(let i=0;i<dateStr.length;i++) hash = ((hash<<5)-hash)+dateStr.charCodeAt(i);
+  hash = Math.abs(hash);
+  return C[hash % C.length];
+}
+
+function joinGame(mode='endless'){
   const name = document.getElementById('nameInp').value.trim();
   const err = document.getElementById('nameErr');
   if(!name){err.textContent='Bitte gib einen Namen ein!';err.style.display='block';return;}
   if(name.length>20){err.textContent='Max. 20 Zeichen!';err.style.display='block';return;}
   err.style.display='none';
   playerName=name;
+  gameMode=mode;
   updateStatsBar();
   showScreen('gameScreen');
+  // Show/hide daily lb button
+  document.getElementById('dailyLbBtn').style.display = mode==='daily' ? 'block' : 'none';
+  // Update header subtitle
+  if(mode==='daily'){
+    document.getElementById('headerSub').textContent = '📅 Täglicher Charakter · ' + getDailyDateStr();
+  } else {
+    document.getElementById('headerSub').textContent = 'Pokédle-Style · Multiplayer';
+  }
   loadLb();
+  if(mode==='daily') loadDailyLb();
   newGame();
 }
 
@@ -1673,7 +1800,32 @@ function toggleLb(){
 
 // ── GAME ──────────────────────────────────────────────────────────────────────
 function newGame(){
-  target = C[Math.floor(Math.random()*C.length)];
+  if(gameMode==='daily'){
+    target = getDailyChar();
+    // Check if already played today
+    const todayKey = 'daily_played_' + getDailyDateStr();
+    const alreadyPlayed = localStorage.getItem(todayKey);
+    if(alreadyPlayed){
+      const d=JSON.parse(alreadyPlayed);
+      document.getElementById('emptyState').style.display='none';
+      if(d.won){
+        document.getElementById('winBanner').classList.add('show');
+        document.getElementById('winText').textContent=`Du hast ${target.n} heute in ${d.attempts} Versuch${d.attempts===1?'':'en'} erraten!`;
+        document.getElementById('winStreak').textContent='';
+        document.getElementById('searchInp').disabled=true;
+        document.querySelector('.search-btn').disabled=true;
+      } else if(d.gave_up){
+        document.getElementById('solutionText').textContent=`${target.e} ${target.n} · ${target.a}`;
+        document.getElementById('loseBanner').classList.add('show');
+        document.getElementById('searchInp').disabled=true;
+        document.querySelector('.search-btn').disabled=true;
+      }
+      toast('Du hast heute schon gespielt!');
+      return;
+    }
+  } else {
+    target = C[Math.floor(Math.random()*C.length)];
+  }
   guesses=[]; won=false; lost=false;
   revealedHints=[]; hintsUsed=[]; selectedChar=null;
   document.getElementById('searchInp').value='';
@@ -1809,9 +1961,9 @@ function submitGuess(){
     won=true;
     setTimeout(()=>{
       document.getElementById('winText').textContent=
-        `Du hast ${target.n} in ${guesses.length} Versuch${guesses.length===1?'':'en'} erraten!`;
+        gameMode==='daily' ? `Du hast den Tages-Charakter in ${guesses.length} Versuch${guesses.length===1?'':'en'} erraten!` : `Du hast ${target.n} in ${guesses.length} Versuch${guesses.length===1?'':'en'} erraten!`;
       const s=getStats(playerName);
-      document.getElementById('winStreak').textContent=`🔥 Streak wird ${s.streak+1}`;
+      document.getElementById('winStreak').textContent= gameMode==='daily' ? `📅 Im Tages-Leaderboard eingetragen` : `🔥 Streak wird ${s.streak+1}`;
       document.getElementById('winBanner').classList.add('show');
       document.getElementById('searchInp').disabled=true;
       document.getElementById('guessBtn').disabled=true;
