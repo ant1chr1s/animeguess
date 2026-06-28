@@ -1325,12 +1325,27 @@ function endLose(){
 function useHint(){
   const nextHint=HINT_AT.find(t=>guesses.length>=t&&!hintsUsed.includes(t));
   if(!nextHint||won||lost) return;
-  const all=COL_KEYS.map((_,i)=>i);
-  const pool=all.filter(i=>!revealedHints.includes(i));
-  if(pool.length===0) return;
+
+  // Find cols that are already correct (green) across ANY guess
+  const alreadyCorrect=new Set();
+  guesses.forEach(g=>{
+    COL_KEYS.forEach((key,idx)=>{
+      if(cellState(key,g,target)==='correct') alreadyCorrect.add(idx);
+    });
+  });
+
+  // Pool = cols not yet revealed as hint AND not already green
+  const pool=COL_KEYS.map((_,i)=>i).filter(i=>!revealedHints.includes(i)&&!alreadyCorrect.has(i));
+  if(pool.length===0){
+    toast('Alle Kategorien sind bereits bekannt!');
+    return;
+  }
   const pick=pool[Math.floor(Math.random()*pool.length)];
   revealedHints.push(pick);
   hintsUsed.push(nextHint);
+
+  // Cost 1 guess attempt
+  guesses.push({_hint:true, a:'', g:'', s:'', h:0, ra:'', f:'', rk:'', ab:'', ha:'', st:'', n:'__hint__'});
 
   const hintBox=document.getElementById('hintBox');
   hintBox.classList.add('show');
@@ -1338,8 +1353,9 @@ function useHint(){
     <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
   `).join('');
   updateCounter();
-  toast(`Tipp aufgedeckt: ${COL_NAMES[pick]} = ${cellText(COL_KEYS[pick],target[COL_KEYS[pick]])}`);
+  toast(`💡 Tipp: ${COL_NAMES[pick]} = ${cellText(COL_KEYS[pick],target[COL_KEYS[pick]])} (kostet 1 Versuch)`);
 }
+
 
 // ── COMPARE ───────────────────────────────────────────────────────────────────
 function cmpH(g,t){
