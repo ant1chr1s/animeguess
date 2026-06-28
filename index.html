@@ -1561,6 +1561,26 @@ function updateKnownRow(){
   });
 }
 
+
+// ── DAILY PROGRESS PERSISTENCE ───────────────────────────────────────────────
+function saveDailyProgress(){
+  if(gameMode!=='daily') return;
+  const progressKey='daily_progress_'+getDailyDateStr();
+  // Save full guess objects (only fields needed for re-rendering)
+  const savedGuesses=guesses.filter(g=>!g._hint).map(g=>({
+    n:g.n,e:g.e,a:g.a,g:g.g,s:g.s,h:g.h,ra:g.ra,f:g.f,rk:g.rk,ab:g.ab,ha:g.ha,st:g.st
+  }));
+  localStorage.setItem(progressKey, JSON.stringify({
+    guesses: savedGuesses,
+    revealedHints,
+    hintsUsed
+  }));
+}
+
+function clearDailyProgress(){
+  localStorage.removeItem('daily_progress_'+getDailyDateStr());
+}
+
 // ── GITHUB LEADERBOARD API ────────────────────────────────────────────────────
 async function loadLb(showToast=false) {
   try {
@@ -1597,6 +1617,7 @@ async function recordResult(didWin, attempts) {
     // Save to localStorage so user can't replay today
     const todayKey = 'daily_played_' + getDailyDateStr();
     localStorage.setItem(todayKey, JSON.stringify({won:didWin, attempts, gave_up:!didWin}));
+    clearDailyProgress();
     // Save to daily leaderboard
     await recordDailyResult(didWin, attempts);
     return;
@@ -1844,6 +1865,30 @@ function newGame(){
   document.getElementById('hintContent').innerHTML='';
   document.getElementById('hintBtn').style.display='none';
   document.getElementById('giveUpBtn').style.display='none';
+  // Restore daily progress if exists
+  if(gameMode==='daily'){
+    const progressKey='daily_progress_'+getDailyDateStr();
+    const saved=localStorage.getItem(progressKey);
+    if(saved){
+      try{
+        const p=JSON.parse(saved);
+        guesses=p.guesses||[];
+        revealedHints=p.revealedHints||[];
+        hintsUsed=p.hintsUsed||[];
+        // Re-render all saved guesses without animation
+        document.getElementById('emptyState').style.display='none';
+        guesses.forEach(g=>renderRow(g,false));
+        updateKnownRow();
+        // Re-show hint box if hints were used
+        if(revealedHints.length>0){
+          document.getElementById('hintBox').classList.add('show');
+          document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
+            <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
+          `).join('');
+        }
+      }catch(e){ localStorage.removeItem('daily_progress_'+getDailyDateStr()); }
+    }
+  }
   updateCounter();
 }
 
