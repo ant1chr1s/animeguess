@@ -2112,14 +2112,23 @@ function useHint(){
     });
   });
 
-  // Hard mode: always reveal anime (col 0 = 'a')
+  // Hard mode: reveal anime first; if anime already known → random hint instead
   const dc=DIFFICULTIES[difficulty];
   let pick;
   if(dc.hintCols){
-    // Reveal specific col (hard mode: Anime)
     const forcedKey=dc.hintCols[0];
     const forcedIdx=COL_KEYS.indexOf(forcedKey);
-    pick=forcedIdx;
+    // Check if anime is already correct (green) in any guess
+    const animeAlreadyKnown = guesses.filter(g=>!g._hint).some(g=>cellState(forcedKey,g,target)==='correct')
+                              || revealedHints.includes(forcedIdx);
+    if(animeAlreadyKnown){
+      // Fall back to random unrevealed, non-green col
+      const pool=COL_KEYS.map((_,i)=>i).filter(i=>!revealedHints.includes(i)&&!alreadyCorrect.has(i));
+      if(pool.length===0){ toast('Alle Kategorien sind bereits bekannt!'); return; }
+      pick=pool[Math.floor(Math.random()*pool.length)];
+    } else {
+      pick=forcedIdx;
+    }
   } else {
     // Pool = cols not yet revealed as hint AND not already green
     const pool=COL_KEYS.map((_,i)=>i).filter(i=>!revealedHints.includes(i)&&!alreadyCorrect.has(i));
