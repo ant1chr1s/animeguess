@@ -203,9 +203,18 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
         <div id="nameErr" class="err" style="display:none"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
-          <button class="btn-primary" onclick="joinGame('endless')" style="background:linear-gradient(135deg,#E040FB,#00E5FF)">♾️ ENDLOS</button>
-          <button class="btn-primary" onclick="joinGame('daily')" style="background:linear-gradient(135deg,#e6a817,#ff6b35)">📅 TÄGLICH</button>
+        <div style="margin-top:4px">
+          <div style="color:var(--muted);font-size:.72rem;text-align:center;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Endlos-Modus</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <button class="btn-primary" onclick="joinGame('endless','easy')" style="background:linear-gradient(135deg,#1db954,#00E5FF);font-size:.8rem;padding:10px 6px">😊 Einfach</button>
+            <button class="btn-primary" onclick="joinGame('endless','normal')" style="background:linear-gradient(135deg,#E040FB,#00E5FF);font-size:.8rem;padding:10px 6px">😐 Normal</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <button class="btn-primary" onclick="joinGame('endless','hard')" style="background:linear-gradient(135deg,#e6a817,#ff6b35);font-size:.8rem;padding:10px 6px">😤 Schwer</button>
+            <button class="btn-primary" onclick="joinGame('endless','veryhard')" style="background:linear-gradient(135deg,#c0392b,#8e0000);font-size:.8rem;padding:10px 6px">💀 Sehr Schwer</button>
+          </div>
+          <div style="color:var(--muted);font-size:.72rem;text-align:center;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Tages-Modus</div>
+          <button class="btn-primary" onclick="joinGame('daily','normal')" style="background:linear-gradient(135deg,#e6a817,#ff6b35);width:100%">📅 TÄGLICH</button>
         </div>
       </div>
       <div class="lb-preview" id="lbPreview" style="display:none">
@@ -232,7 +241,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <div class="main">
     <!-- STATS BAR -->
     <div class="stats-bar">
-      <span class="player-name" id="statsName"></span>
+      <span class="player-name" id="statsName"></span><span id="statsDiff" style="background:rgba(224,64,251,.2);border-radius:6px;padding:2px 7px;font-size:.7rem;margin-left:4px"></span>
       <span>· 🔥 Streak: <b id="statsStreak" style="color:var(--text)">0</b></span>
       <span>· Best: <b id="statsBest" style="color:var(--text)">0</b></span>
       <span>· <b id="statsWins" style="color:var(--correct)">0</b>W / <b id="statsLosses" style="color:var(--wrong)">0</b>L</span>
@@ -251,7 +260,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <!-- LEADERBOARD PANEL -->
     <div class="lb-panel" id="lbPanel">
       <div class="lb-panel-header">
-        <div class="lb-panel-title">🏆 LEADERBOARD</div>
+        <div class="lb-panel-title">🏆 LEADERBOARD — <span id="diffLabel"></span></div>
         <button class="btn-refresh" onclick="loadLb(true)">↻ Aktualisieren</button>
       </div>
       <div id="lbRows"><div style="color:var(--muted);text-align:center;font-size:.8rem">Lädt...</div></div>
@@ -374,8 +383,16 @@ const GITHUB_TOKEN = ['ghp_g0Fu1qazXgsLP4I','tjJraR3KS9XeHe51f5BLL'].join('');
 const GITHUB_REPO  = 'ant1chr1s/animeguess';
 const LB_FILE      = 'leaderboard.json';
 const DAILY_LB_FILE = 'leaderboard-daily.json';
-const MAX_GUESSES  = 40;
-const HINT_AT      = [10, 25];
+let DIFF_LB_FILE = 'leaderboard-easy.json';
+const DIFFICULTIES = {
+  easy:       { label:'😊 Einfach',   max:40, hints:[10,25], hintCols:null,        lb:'leaderboard-easy.json' },
+  normal:     { label:'😐 Normal',    max:30, hints:[10,20], hintCols:null,        lb:'leaderboard-normal.json' },
+  hard:       { label:'😤 Schwer',    max:15, hints:[10],    hintCols:['a'],       lb:'leaderboard-hard.json' },
+  veryhard:   { label:'💀 Sehr Schwer',max:11, hints:[],     hintCols:null,        lb:'leaderboard-veryhard.json' },
+};
+// Dynamic - set by difficulty
+let MAX_GUESSES = 40;
+let HINT_AT = [10, 25];
 const COL_KEYS     = ['a','g','s','h','ra','f','rk','ab','ha','st'];
 const COL_NAMES    = ['Anime','Genre','Geschlecht','Größe','Rasse','Fraktion','Rang','Fähigkeit','Haarfarbe','Status'];
 
@@ -1490,7 +1507,7 @@ const C=[
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let playerName='', target=null, guesses=[], won=false, lost=false, gameMode='endless';
+let playerName='', target=null, guesses=[], won=false, lost=false, gameMode='endless', difficulty='easy', veryHardFreeUsed=false;
 let revealedHints=[], hintsUsed=[], selectedChar=null;
 let leaderboard={}, lbSha='';
 
@@ -1603,7 +1620,7 @@ function clearDailyProgress(){
 // ── GITHUB LEADERBOARD API ────────────────────────────────────────────────────
 async function loadLb(showToast=false) {
   try {
-    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${LB_FILE}`,{
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${DIFF_LB_FILE}`,{
       headers:{'Authorization':'token '+GITHUB_TOKEN,'Accept':'application/vnd.github.v3+json'}
     });
     const d = await r.json();
@@ -1617,10 +1634,10 @@ async function loadLb(showToast=false) {
 async function saveLb() {
   try {
     const content = btoa(unescape(encodeURIComponent(JSON.stringify({leaderboard}))));
-    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${LB_FILE}`,{
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${DIFF_LB_FILE}`,{
       method:'PUT',
       headers:{'Authorization':'token '+GITHUB_TOKEN,'Content-Type':'application/json'},
-      body:JSON.stringify({message:'update leaderboard',content,sha:lbSha})
+      body:JSON.stringify({message:'update '+DIFF_LB_FILE,content,sha:lbSha})
     });
     const d = await r.json();
     if(d.content) lbSha = d.content.sha;
@@ -1641,7 +1658,7 @@ async function recordResult(didWin, attempts) {
     await recordDailyResult(didWin, attempts);
     return;
   }
-  // Endless mode - update normal leaderboard
+  // Endless mode - update difficulty leaderboard
   await loadLb();
   const prev = getStats(playerName);
   const newStreak = didWin ? prev.streak+1 : 0;
@@ -1650,6 +1667,7 @@ async function recordResult(didWin, attempts) {
     losses: prev.losses + (didWin?0:1),
     streak: newStreak,
     bestStreak: Math.max(prev.bestStreak||0, newStreak),
+    bestAttempts: didWin ? Math.min(prev.bestAttempts||999, attempts) : (prev.bestAttempts||999),
   };
   await saveLb();
   updateStatsBar();
@@ -1792,7 +1810,7 @@ function getDailyChar(){
   return C[hash % C.length];
 }
 
-function joinGame(mode='endless'){
+function joinGame(mode='endless', diff='easy'){
   const name = document.getElementById('nameInp').value.trim();
   const err = document.getElementById('nameErr');
   if(!name){err.textContent='Bitte gib einen Namen ein!';err.style.display='block';return;}
@@ -1800,16 +1818,19 @@ function joinGame(mode='endless'){
   err.style.display='none';
   playerName=name;
   gameMode=mode;
+  difficulty=mode==='daily'?'normal':diff;
+  // Apply difficulty settings
+  const dc=DIFFICULTIES[difficulty];
+  MAX_GUESSES=dc.max;
+  HINT_AT=[...dc.hints];
+  DIFF_LB_FILE=dc.lb;
   updateStatsBar();
   showScreen('gameScreen');
+  // Difficulty badge in header
+  const badge = mode==='daily' ? '📅 Täglich' : dc.label;
+  document.getElementById('headerSub').textContent = badge + ' · Pokédle-Style';
   // Show/hide daily lb button
   document.getElementById('dailyLbBtn').style.display = mode==='daily' ? 'block' : 'none';
-  // Update header subtitle
-  if(mode==='daily'){
-    document.getElementById('headerSub').textContent = '📅 Täglicher Charakter · ' + getDailyDateStr();
-  } else {
-    document.getElementById('headerSub').textContent = 'Pokédle-Style · Multiplayer';
-  }
   loadLb();
   if(mode==='daily') loadDailyLb();
   newGame();
@@ -1826,6 +1847,8 @@ document.getElementById('nameInp').addEventListener('keydown',e=>{if(e.key==='En
 function updateStatsBar(){
   const s = getStats(playerName);
   document.getElementById('statsName').textContent = playerName;
+  const diffEl=document.getElementById('statsDiff');
+  if(diffEl) diffEl.textContent=DIFFICULTIES[difficulty]?.label||'';
   document.getElementById('statsStreak').textContent = s.streak;
   document.getElementById('statsBest').textContent = s.bestStreak||0;
   document.getElementById('statsWins').textContent = s.wins;
@@ -1866,7 +1889,7 @@ function newGame(){
   } else {
     target = C[Math.floor(Math.random()*C.length)];
   }
-  guesses=[]; won=false; lost=false;
+  guesses=[]; won=false; lost=false; veryHardFreeUsed=false;
   revealedHints=[]; hintsUsed=[]; selectedChar=null;
   document.getElementById('searchInp').value='';
   document.getElementById('searchInp').disabled=false;
@@ -2036,8 +2059,27 @@ function submitGuess(){
       recordResult(true, guesses.length);
     }, COL_KEYS.length*70+400);
   } else if(guesses.length>=MAX_GUESSES){
-    lost=true;
-    setTimeout(()=>endLose(), COL_KEYS.length*70+400);
+    if(difficulty==='veryhard' && !veryHardFreeUsed && guesses.filter(g=>!g._hint).length===10){
+      // Special: at exactly 10 real guesses, reveal Anime + Haarfarbe for free, then 1 last guess
+      veryHardFreeUsed=true;
+      const animeIdx=COL_KEYS.indexOf('a');
+      const hairIdx=COL_KEYS.indexOf('ha');
+      if(!revealedHints.includes(animeIdx)) revealedHints.push(animeIdx);
+      if(!revealedHints.includes(hairIdx)) revealedHints.push(hairIdx);
+      // Adjust MAX to allow 1 more guess
+      MAX_GUESSES=11;
+      const hintBox=document.getElementById('hintBox');
+      hintBox.classList.add('show');
+      document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
+        <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
+      `).join('');
+      updateKnownRow();
+      updateCounter();
+      toast('💡 Anime und Haarfarbe wurden aufgedeckt! Du hast noch einen letzten Versuch!');
+    } else {
+      lost=true;
+      setTimeout(()=>endLose(), COL_KEYS.length*70+400);
+    }
   }
 }
 
@@ -2064,19 +2106,29 @@ function useHint(){
 
   // Find cols that are already correct (green) across ANY guess
   const alreadyCorrect=new Set();
-  guesses.forEach(g=>{
+  guesses.filter(g=>!g._hint).forEach(g=>{
     COL_KEYS.forEach((key,idx)=>{
       if(cellState(key,g,target)==='correct') alreadyCorrect.add(idx);
     });
   });
 
-  // Pool = cols not yet revealed as hint AND not already green
-  const pool=COL_KEYS.map((_,i)=>i).filter(i=>!revealedHints.includes(i)&&!alreadyCorrect.has(i));
-  if(pool.length===0){
-    toast('Alle Kategorien sind bereits bekannt!');
-    return;
+  // Hard mode: always reveal anime (col 0 = 'a')
+  const dc=DIFFICULTIES[difficulty];
+  let pick;
+  if(dc.hintCols){
+    // Reveal specific col (hard mode: Anime)
+    const forcedKey=dc.hintCols[0];
+    const forcedIdx=COL_KEYS.indexOf(forcedKey);
+    pick=forcedIdx;
+  } else {
+    // Pool = cols not yet revealed as hint AND not already green
+    const pool=COL_KEYS.map((_,i)=>i).filter(i=>!revealedHints.includes(i)&&!alreadyCorrect.has(i));
+    if(pool.length===0){
+      toast('Alle Kategorien sind bereits bekannt!');
+      return;
+    }
+    pick=pool[Math.floor(Math.random()*pool.length)];
   }
-  const pick=pool[Math.floor(Math.random()*pool.length)];
   revealedHints.push(pick);
   hintsUsed.push(nextHint);
 
