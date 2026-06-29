@@ -1954,11 +1954,26 @@ function updateCounter(){
   }
   document.getElementById('giveUpBtn').style.display = n>0&&!won&&!lost?'block':'none';
   // Hint button
-  const nextHint = HINT_AT.find(t=>n>=t&&!hintsUsed.includes(t));
   const hintBtn = document.getElementById('hintBtn');
-  if(nextHint&&!won&&!lost){
-    hintBtn.style.display='block';
-    hintBtn.textContent=`💡 TIPP (bei ${nextHint})`;
+  if(!won&&!lost){
+    if(difficulty==='veryhard'){
+      // Sehr Schwer: Tipp-Button nach 10 echten Versuchen, kostet keinen Versuch, nur einmal
+      const realGuesses = guesses.filter(g=>!g._hint).length;
+      if(realGuesses>=10 && !veryHardFreeUsed){
+        hintBtn.style.display='block';
+        hintBtn.textContent='💡 TIPP freischalten (Anime + Haarfarbe)';
+      } else {
+        hintBtn.style.display='none';
+      }
+    } else {
+      const nextHint = HINT_AT.find(t=>n>=t&&!hintsUsed.includes(t));
+      if(nextHint){
+        hintBtn.style.display='block';
+        hintBtn.textContent=`💡 TIPP (bei ${nextHint})`;
+      } else {
+        hintBtn.style.display='none';
+      }
+    }
   } else {
     hintBtn.style.display='none';
   }
@@ -2066,27 +2081,8 @@ function submitGuess(){
       recordResult(true, guesses.length);
     }, COL_KEYS.length*70+400);
   } else if(guesses.length>=MAX_GUESSES){
-    if(difficulty==='veryhard' && !veryHardFreeUsed && guesses.filter(g=>!g._hint).length===10){
-      // Special: at exactly 10 real guesses, reveal Anime + Haarfarbe for free, then 1 last guess
-      veryHardFreeUsed=true;
-      const animeIdx=COL_KEYS.indexOf('a');
-      const hairIdx=COL_KEYS.indexOf('ha');
-      if(!revealedHints.includes(animeIdx)) revealedHints.push(animeIdx);
-      if(!revealedHints.includes(hairIdx)) revealedHints.push(hairIdx);
-      // Adjust MAX to allow 1 more guess
-      MAX_GUESSES=11;
-      const hintBox=document.getElementById('hintBox');
-      hintBox.classList.add('show');
-      document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
-        <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
-      `).join('');
-      updateKnownRow();
-      updateCounter();
-      toast('💡 Anime und Haarfarbe wurden aufgedeckt! Du hast noch einen letzten Versuch!');
-    } else {
-      lost=true;
-      setTimeout(()=>endLose(), COL_KEYS.length*70+400);
-    }
+    lost=true;
+    setTimeout(()=>endLose(), COL_KEYS.length*70+400);
   }
 }
 
@@ -2108,8 +2104,32 @@ function endLose(){
 
 // ── HINT ──────────────────────────────────────────────────────────────────────
 function useHint(){
+  if(won||lost) return;
+
+  // Sehr Schwer: spezielle Freischaltung
+  if(difficulty==='veryhard'){
+    const realGuesses=guesses.filter(g=>!g._hint).length;
+    if(realGuesses>=10 && !veryHardFreeUsed){
+      veryHardFreeUsed=true;
+      MAX_GUESSES=11;
+      const animeIdx=COL_KEYS.indexOf('a');
+      const hairIdx=COL_KEYS.indexOf('ha');
+      if(!revealedHints.includes(animeIdx)) revealedHints.push(animeIdx);
+      if(!revealedHints.includes(hairIdx)) revealedHints.push(hairIdx);
+      const hintBox=document.getElementById('hintBox');
+      hintBox.classList.add('show');
+      document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
+        <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
+      `).join('');
+      updateKnownRow();
+      updateCounter();
+      toast('💡 Anime und Haarfarbe aufgedeckt! Noch 1 letzter Versuch!');
+    }
+    return;
+  }
+
   const nextHint=HINT_AT.find(t=>guesses.length>=t&&!hintsUsed.includes(t));
-  if(!nextHint||won||lost) return;
+  if(!nextHint) return;
 
   // Find cols that are already correct (green) across ANY guess
   const alreadyCorrect=new Set();
