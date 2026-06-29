@@ -1725,7 +1725,12 @@ function renderDailyLb() {
     .sort((a,b)=>a[1].attempts - b[1].attempts);
   const medals=['🥇','🥈','🥉'];
   const char = getDailyChar();
-  let html = `<div style="text-align:center;margin-bottom:10px;font-size:.8rem;color:var(--muted)">Heutiger Charakter: <b style="color:var(--text)">${char.e} ${char.n}</b> · ${char.a}</div>`;
+  const todayKey = 'daily_played_' + dateStr;
+  const alreadyPlayed = localStorage.getItem(todayKey);
+  const charLine = alreadyPlayed
+    ? `<div style="text-align:center;margin-bottom:10px;font-size:.8rem;color:var(--muted)">Heutiger Charakter: <b style="color:var(--text)">${char.e} ${char.n}</b> · ${char.a}</div>`
+    : `<div style="text-align:center;margin-bottom:10px;font-size:.8rem;color:var(--muted)">Heutiger Charakter: <b style="color:var(--cyan)">❓ Noch nicht erraten</b></div>`;
+  let html = charLine;
   if(rows.length===0){
     html += '<div style="color:var(--muted);text-align:center;font-size:.8rem">Noch niemand hat heute gewonnen!</div>';
   } else {
