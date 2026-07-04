@@ -2066,7 +2066,7 @@ function submitGuess(){
   renderRow(char, true);
   updateKnownRow();
 
-  if(char.n===target.n){
+  if(char.n===target.n && char.a===target.a){
     won=true;
     setTimeout(()=>{
       document.getElementById('winText').textContent=
@@ -2210,7 +2210,7 @@ function cellText(key,val){
 
 // ── RENDER ROW ────────────────────────────────────────────────────────────────
 function renderRow(char, animate){
-  const nameState = char.n===target.n?'correct':'wrong';
+  const nameState = (char.n===target.n && char.a===target.a)?'correct':'wrong';
   let html=`<div class="grid-row">
     <div class="cell name-cell ${animate?'reveal':''} ${nameState}" style="${animate?'animation-delay:0ms':''}">
       <span>${char.e}</span><span>${char.n}</span>
