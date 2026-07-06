@@ -1711,14 +1711,33 @@ async function saveDailyLb() {
   } catch(e) { console.error('Daily LB save error',e); }
 }
 
+function getDailyStreak(name) {
+  // Calculate streak: how many consecutive days this player has won
+  let streak = 0;
+  const today = new Date();
+  for(let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const dayData = dailyLeaderboard[dateStr];
+    if(dayData && dayData[name] && dayData[name].won) {
+      streak++;
+    } else if(i > 0) {
+      break; // streak broken
+    }
+  }
+  return streak;
+}
+
 async function recordDailyResult(didWin, attempts) {
   await loadDailyLb();
   const dateStr = getDailyDateStr();
   if(!dailyLeaderboard[dateStr]) dailyLeaderboard[dateStr] = {};
+  const streak = didWin ? getDailyStreak(playerName) + 1 : 0;
   if(didWin){
-    dailyLeaderboard[dateStr][playerName] = { attempts, won:true };
+    dailyLeaderboard[dateStr][playerName] = { attempts, won:true, streak };
   } else {
-    dailyLeaderboard[dateStr][playerName] = { attempts, won:false };
+    dailyLeaderboard[dateStr][playerName] = { attempts, won:false, streak:0 };
   }
   await saveDailyLb();
   renderDailyLb();
@@ -1750,6 +1769,7 @@ function renderDailyLb() {
         </div>
         <div class="lb-entry-right">
           <span>🎯 <b style="color:var(--correct)">${s.attempts}</b> Versuch${s.attempts===1?'':'e'}</span>
+          ${s.streak>1?`<span>🔥 <b style="color:var(--partial)">${s.streak}</b> Tage</span>`:''}
         </div>
       </div>`).join('');
   }
