@@ -2198,8 +2198,16 @@ function cmpH(g,t){
 function cmpStr(g,t){
   if(!g||!t) return'wrong';
   if(g===t) return'correct';
-  const gp=g.toLowerCase().split('/'),tp=t.toLowerCase().split('/');
-  return gp.some(p=>tp.some(q=>q.trim()===p.trim()))?'partial':'wrong';
+  // Split by / and also strip parenthetical suffixes like "(kein Mana)" or "(3 Augen)"
+  const strip=s=>s.toLowerCase().replace(/\s*\([^)]*\)/g,'').trim();
+  const gp=g.toLowerCase().split('/').map(s=>s.trim());
+  const tp=t.toLowerCase().split('/').map(s=>s.trim());
+  // Check exact part match
+  if(gp.some(p=>tp.some(q=>q===p))) return'partial';
+  // Check stripped match (ignores parenthetical qualifiers)
+  const gps=gp.map(strip), tps=tp.map(strip);
+  if(gps.some(p=>p&&tps.some(q=>q&&q===p))) return'partial';
+  return'wrong';
 }
 function cellState(key,guess,tgt){
   if(key==='s') return guess.s===tgt.s?'correct':'wrong';
