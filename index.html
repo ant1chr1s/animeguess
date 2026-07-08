@@ -2040,7 +2040,11 @@ function updateCounter(){
       const realGuesses = guesses.filter(g=>!g._hint).length;
       if(realGuesses>=10 && !veryHardFreeUsed){
         hintBtn.style.display='block';
-        hintBtn.textContent='💡 TIPP freischalten (alle Kategorien)';
+        // Check if anime+hair already known to show appropriate button text
+      const _animeIdx=COL_KEYS.indexOf('a'), _hairIdx=COL_KEYS.indexOf('ha');
+      const _animeKnown=revealedHints.includes(_animeIdx)||guesses.filter(g=>!g._hint).some(g=>cellState('a',g,target)==='correct');
+      const _hairKnown=revealedHints.includes(_hairIdx)||guesses.filter(g=>!g._hint).some(g=>cellState('ha',g,target)==='correct');
+      hintBtn.textContent=(_animeKnown&&_hairKnown)?'💡 Alle Kategorien freischalten':'💡 Anime + Haarfarbe freischalten';
       } else {
         hintBtn.style.display='none';
       }
@@ -2191,10 +2195,25 @@ function useHint(){
     if(realGuesses>=10 && !veryHardFreeUsed){
       veryHardFreeUsed=true;
       MAX_GUESSES=11;
-      // Reveal ALL categories except name (index 0 in COL_KEYS)
-      COL_KEYS.forEach((key,idx)=>{
-        if(!revealedHints.includes(idx)) revealedHints.push(idx);
-      });
+      const animeIdx=COL_KEYS.indexOf('a');
+      const hairIdx=COL_KEYS.indexOf('ha');
+      // Check if anime AND hair are already known (green in any guess or already revealed)
+      const animeKnown = revealedHints.includes(animeIdx) ||
+        guesses.filter(g=>!g._hint).some(g=>cellState('a',g,target)==='correct');
+      const hairKnown = revealedHints.includes(hairIdx) ||
+        guesses.filter(g=>!g._hint).some(g=>cellState('ha',g,target)==='correct');
+      if(animeKnown && hairKnown){
+        // Both already known → reveal ALL remaining categories
+        COL_KEYS.forEach((_,idx)=>{
+          if(!revealedHints.includes(idx)) revealedHints.push(idx);
+        });
+        toast('💡 Alle Kategorien aufgedeckt! Noch 1 letzter Versuch!');
+      } else {
+        // Reveal only Anime + Haarfarbe
+        if(!revealedHints.includes(animeIdx)) revealedHints.push(animeIdx);
+        if(!revealedHints.includes(hairIdx)) revealedHints.push(hairIdx);
+        toast('💡 Anime und Haarfarbe aufgedeckt! Noch 1 letzter Versuch!');
+      }
       const hintBox=document.getElementById('hintBox');
       hintBox.classList.add('show');
       document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
@@ -2202,7 +2221,6 @@ function useHint(){
       `).join('');
       updateKnownRow();
       updateCounter();
-      toast('💡 Alle Kategorien aufgedeckt! Noch 1 letzter Versuch!');
     }
     return;
   }
