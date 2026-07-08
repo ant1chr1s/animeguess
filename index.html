@@ -2040,7 +2040,7 @@ function updateCounter(){
       const realGuesses = guesses.filter(g=>!g._hint).length;
       if(realGuesses>=10 && !veryHardFreeUsed){
         hintBtn.style.display='block';
-        hintBtn.textContent='💡 TIPP freischalten (Anime + Haarfarbe)';
+        hintBtn.textContent='💡 TIPP freischalten (alle Kategorien)';
       } else {
         hintBtn.style.display='none';
       }
@@ -2191,10 +2191,10 @@ function useHint(){
     if(realGuesses>=10 && !veryHardFreeUsed){
       veryHardFreeUsed=true;
       MAX_GUESSES=11;
-      const animeIdx=COL_KEYS.indexOf('a');
-      const hairIdx=COL_KEYS.indexOf('ha');
-      if(!revealedHints.includes(animeIdx)) revealedHints.push(animeIdx);
-      if(!revealedHints.includes(hairIdx)) revealedHints.push(hairIdx);
+      // Reveal ALL categories except name (index 0 in COL_KEYS)
+      COL_KEYS.forEach((key,idx)=>{
+        if(!revealedHints.includes(idx)) revealedHints.push(idx);
+      });
       const hintBox=document.getElementById('hintBox');
       hintBox.classList.add('show');
       document.getElementById('hintContent').innerHTML=revealedHints.map(idx=>`
@@ -2202,7 +2202,7 @@ function useHint(){
       `).join('');
       updateKnownRow();
       updateCounter();
-      toast('💡 Anime und Haarfarbe aufgedeckt! Noch 1 letzter Versuch!');
+      toast('💡 Alle Kategorien aufgedeckt! Noch 1 letzter Versuch!');
     }
     return;
   }
