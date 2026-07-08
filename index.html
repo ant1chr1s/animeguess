@@ -218,7 +218,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
         </div>
       </div>
       <div class="lb-preview" id="lbPreview" style="display:none">
-        <div class="lb-title">🏆 LEADERBOARD</div>
+        <div class="lb-title">🏆 GESAMT-LEADERBOARD</div>
         <div id="lbPreviewRows"></div>
       </div>
     </div>
@@ -1811,16 +1811,57 @@ function renderLb() {
       </div>`).join('');
   document.getElementById('lbRows').innerHTML = html;
 
-  // Name screen preview
-  if(rows.length>0){
-    const prev = document.getElementById('lbPreview');
-    prev.style.display='block';
-    document.getElementById('lbPreviewRows').innerHTML = rows.slice(0,6).map(([name,s],i)=>`
-      <div class="lb-row">
-        <span class="lb-name">${medals[i]||`${i+1}.`} ${name}</span>
-        <span class="lb-stats">🔥${s.streak} · ${s.wins}W/${s.losses}L</span>
-      </div>`).join('');
-  }
+  // Name screen preview - trigger combined LB load
+  loadCombinedLb();
+}
+
+// ── COMBINED LEADERBOARD ──────────────────────────────────────────────────────
+const ALL_LB_FILES = [
+  {file:'leaderboard-easy.json',   label:'😊', diff:'easy'},
+  {file:'leaderboard-normal.json', label:'😐', diff:'normal'},
+  {file:'leaderboard-hard.json',   label:'😤', diff:'hard'},
+  {file:'leaderboard-veryhard.json',label:'💀', diff:'veryhard'},
+];
+
+async function loadCombinedLb() {
+  const medals = ['🥇','🥈','🥉'];
+  const combined = {}; // name → {wins, losses, streak, bestStreak, diffWins:{easy,normal,hard,veryhard}}
+
+  await Promise.all(ALL_LB_FILES.map(async ({file, diff}) => {
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${file}`,{
+        headers:{'Authorization':'token '+GITHUB_TOKEN,'Accept':'application/vnd.github.v3+json'}
+      });
+      const d = await r.json();
+      const lb = JSON.parse(atob(d.content.replace(/\n/g,''))).leaderboard || {};
+      Object.entries(lb).forEach(([name, s]) => {
+        if(!combined[name]) combined[name] = {wins:0, losses:0, streak:0, bestStreak:0, diffWins:{}};
+        combined[name].wins += s.wins||0;
+        combined[name].losses += s.losses||0;
+        combined[name].streak = Math.max(combined[name].streak, s.streak||0);
+        combined[name].bestStreak = Math.max(combined[name].bestStreak, s.bestStreak||0);
+        if((s.wins||0) > 0) combined[name].diffWins[diff] = true;
+      });
+    } catch(e) {}
+  }));
+
+  const rows = Object.entries(combined)
+    .sort((a,b) => b[1].wins - a[1].wins || a[1].losses - b[1].losses);
+
+  if(rows.length === 0) return;
+
+  const prev = document.getElementById('lbPreview');
+  prev.style.display = 'block';
+
+  const diffIcons = {easy:'😊', normal:'😐', hard:'😤', veryhard:'💀'};
+
+  document.getElementById('lbPreviewRows').innerHTML = rows.slice(0,8).map(([name,s],i) => {
+    const diffs = Object.keys(s.diffWins).map(d=>diffIcons[d]).join('');
+    return `<div class="lb-row">
+      <span class="lb-name">${medals[i]||`${i+1}.`} ${name}</span>
+      <span class="lb-stats">🔥${s.bestStreak} · ${s.wins}W/${s.losses}L ${diffs?`<span style="font-size:.7rem">${diffs}</span>`:''}</span>
+    </div>`;
+  }).join('');
 }
 
 // ── SCREENS ───────────────────────────────────────────────────────────────────
