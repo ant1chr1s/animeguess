@@ -2517,6 +2517,7 @@ async function newQuoteGame() {
 }
 
 function onQuoteSearch() {
+  if(quoteSelectingFromDropdown) return;
   const q = document.getElementById('quoteSearchInp').value.trim().toLowerCase();
   quoteSelectedChar = null;
   const box = document.getElementById('quoteSuggestions');
@@ -2535,12 +2536,15 @@ function onQuoteSearch() {
   box.classList.add('open');
 }
 
+var quoteSelectingFromDropdown = false;
 function selectQuoteChar(name, anime) {
   quoteSelectedChar = null;
   for(var i=0;i<C.length;i++){
     if(C[i].n===name && C[i].a===anime){ quoteSelectedChar=C[i]; break; }
   }
+  quoteSelectingFromDropdown = true;
   document.getElementById('quoteSearchInp').value = name;
+  quoteSelectingFromDropdown = false;
   document.getElementById('quoteSuggestions').innerHTML = '';
   document.getElementById('quoteSuggestions').classList.remove('open');
 }
