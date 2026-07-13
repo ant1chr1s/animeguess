@@ -251,10 +251,15 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <!-- DAILY LEADERBOARD PANEL -->
     <div class="lb-panel" id="dailyLbPanel">
       <div class="lb-panel-header">
-        <div class="lb-panel-title">📅 TAGES-LEADERBOARD — <span id="dailyDateLabel"></span></div>
-        <button class="btn-refresh" onclick="loadDailyLb(true)">↻ Aktualisieren</button>
+        <div class="lb-panel-title">📅 TAGES-LEADERBOARD</div>
+        <button class="btn-refresh" onclick="loadDailyLb(true)">↻</button>
       </div>
-      <div id="dailyLbRows"><div style="color:var(--muted);text-align:center;font-size:.8rem">Lädt...</div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--border)">
+        <button class="btn-icon" onclick="dailyHistoryPrev()" style="font-size:1rem;padding:2px 8px">◀</button>
+        <span id="dailyDateLabel" style="font-size:.8rem;color:var(--cyan);font-weight:600;cursor:pointer" onclick="dailyGoToday()">Heute</span>
+        <button class="btn-icon" onclick="dailyHistoryNext()" id="dailyNextBtn" style="font-size:1rem;padding:2px 8px">▶</button>
+      </div>
+      <div id="dailyLbRows"><div style="color:var(--muted);text-align:center;font-size:.8rem;padding:12px">Lädt...</div></div>
     </div>
 
     <!-- LEADERBOARD PANEL -->
@@ -1678,7 +1683,7 @@ async function recordResult(didWin, attempts) {
 }
 
 // ── DAILY LEADERBOARD ─────────────────────────────────────────────────────────
-let dailyLeaderboard = {}, dailyLbSha = '';
+let dailyLeaderboard = {}, dailyLbSha = '', dailyViewDate = null;
 
 async function loadDailyLb(showToast=false) {
   try {
@@ -1738,23 +1743,79 @@ async function recordDailyResult(didWin, attempts) {
   renderDailyLb();
 }
 
+function getDateStrOffset(offset){
+  const d = new Date(getDailyDateStr());
+  d.setDate(d.getDate() + offset);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function getDailyCharForDate(dateStr){
+  const epoch = new Date(DAILY_EPOCH);
+  const day = new Date(dateStr);
+  const dayNum = Math.round((day - epoch) / 86400000);
+  if(dayNum < 0){
+    let hash = 0;
+    for(let i=0;i<dateStr.length;i++) hash = ((hash<<5)-hash)+dateStr.charCodeAt(i);
+    return C[Math.abs(hash) % C.length];
+  }
+  const charIdx = DAILY_ROTATION[dayNum % DAILY_ROTATION.length];
+  return C[charIdx] || C[0];
+}
+
+function dailyHistoryPrev(){
+  const cur = dailyViewDate || getDailyDateStr();
+  const d = new Date(cur);
+  d.setDate(d.getDate()-1);
+  dailyViewDate = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  renderDailyLb();
+}
+
+function dailyHistoryNext(){
+  const cur = dailyViewDate || getDailyDateStr();
+  const today = getDailyDateStr();
+  if(cur >= today) return;
+  const d = new Date(cur);
+  d.setDate(d.getDate()+1);
+  dailyViewDate = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  renderDailyLb();
+}
+
+function dailyGoToday(){
+  dailyViewDate = null;
+  renderDailyLb();
+}
+
 function renderDailyLb() {
-  const dateStr = getDailyDateStr();
-  document.getElementById('dailyDateLabel').textContent = dateStr;
-  const todayData = dailyLeaderboard[dateStr] || {};
-  const rows = Object.entries(todayData)
+  const today = getDailyDateStr();
+  const dateStr = dailyViewDate || today;
+  const isToday = dateStr === today;
+
+  // Update nav UI
+  document.getElementById('dailyDateLabel').textContent = isToday ? '📅 Heute' : dateStr;
+  const nextBtn = document.getElementById('dailyNextBtn');
+  if(nextBtn) nextBtn.style.opacity = dateStr >= today ? '0.3' : '1';
+
+  const dayData = dailyLeaderboard[dateStr] || {};
+  const rows = Object.entries(dayData)
     .filter(([,v])=>v.won)
     .sort((a,b)=>a[1].attempts - b[1].attempts);
   const medals=['🥇','🥈','🥉'];
-  const char = getDailyChar();
+
+  // Character reveal logic
+  const char = getDailyCharForDate(dateStr);
   const todayKey = 'daily_played_' + dateStr;
   const alreadyPlayed = localStorage.getItem(todayKey);
-  const charLine = alreadyPlayed
-    ? `<div style="text-align:center;margin-bottom:10px;font-size:.8rem;color:var(--muted)">Heutiger Charakter: <b style="color:var(--text)">${char.e} ${char.n}</b> · ${char.a}</div>`
-    : `<div style="text-align:center;margin-bottom:10px;font-size:.8rem;color:var(--muted)">Heutiger Charakter: <b style="color:var(--cyan)">❓ Noch nicht erraten</b></div>`;
+  const isPast = dateStr < today;
+  const showChar = alreadyPlayed || isPast;
+
+  const charLine = showChar
+    ? `<div style="text-align:center;margin-bottom:8px;font-size:.8rem;color:var(--muted)">${isPast&&!isToday?'📆':'📅'} Charakter: <b style="color:var(--text)">${char.e} ${char.n}</b> · <span style="color:var(--muted)">${char.a}</span></div>`
+    : `<div style="text-align:center;margin-bottom:8px;font-size:.8rem;color:var(--muted)">Heutiger Charakter: <b style="color:var(--cyan)">❓ Noch nicht erraten</b></div>`;
+
   let html = charLine;
+
   if(rows.length===0){
-    html += '<div style="color:var(--muted);text-align:center;font-size:.8rem">Noch niemand hat heute gewonnen!</div>';
+    html += '<div style="color:var(--muted);text-align:center;font-size:.8rem;padding:8px">Keine Einträge für diesen Tag</div>';
   } else {
     html += rows.map(([name,s],i)=>`
       <div class="lb-entry ${name===playerName?'me':''}">
@@ -1768,8 +1829,7 @@ function renderDailyLb() {
         </div>
       </div>`).join('');
   }
-  // Add losers below
-  const losers = Object.entries(todayData).filter(([,v])=>!v.won);
+  const losers = Object.entries(dayData).filter(([,v])=>!v.won);
   if(losers.length>0){
     html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted)">Aufgegeben: ${losers.map(([n])=>n).join(', ')}</div>`;
   }
@@ -1779,7 +1839,10 @@ function renderDailyLb() {
 function toggleDailyLb(){
   const p=document.getElementById('dailyLbPanel');
   p.classList.toggle('open');
-  if(p.classList.contains('open')) loadDailyLb();
+  if(p.classList.contains('open')){
+    dailyViewDate=null;
+    loadDailyLb();
+  }
 }
 
 // ── RENDER LEADERBOARD ────────────────────────────────────────────────────────
