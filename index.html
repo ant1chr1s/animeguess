@@ -215,6 +215,8 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
           </div>
           <div style="color:var(--muted);font-size:.72rem;text-align:center;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Tages-Modus</div>
           <button class="btn-primary" onclick="joinGame('daily','normal')" style="background:linear-gradient(135deg,#e6a817,#ff6b35);width:100%">📅 TÄGLICH</button>
+          <div style="color:var(--muted);font-size:.72rem;text-align:center;margin:8px 0 6px;letter-spacing:.5px;text-transform:uppercase">Zitat-Modus</div>
+          <button class="btn-primary" onclick="joinQuoteGame()" style="background:linear-gradient(135deg,#6c3483,#a569bd);width:100%">💬 WER HAT ES GESAGT? <span style="font-size:.65rem;opacity:.8">(Beta)</span></button>
         </div>
       </div>
       <div class="lb-preview" id="lbPreview" style="display:none">
@@ -222,6 +224,54 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
         <div id="lbPreviewRows"></div>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- QUOTE SCREEN -->
+<div id="quoteScreen" class="screen">
+  <div style="max-width:480px;margin:0 auto;padding:20px 16px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button class="btn-icon" onclick="showScreen('nameScreen')" style="font-size:1.1rem">←</button>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text)">💬 Wer hat es gesagt? <span style="font-size:.75rem;color:var(--muted);font-weight:400">(Beta)</span></div>
+    </div>
+
+    <!-- Quote box -->
+    <div id="quoteBox" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;min-height:120px;display:flex;align-items:center;justify-content:center">
+      <div id="quoteText" style="font-size:1.1rem;line-height:1.6;color:var(--text);font-style:italic;text-align:center">
+        <div style="color:var(--muted);font-size:.85rem">Lade Zitat...</div>
+      </div>
+    </div>
+    <div id="quoteAnime" style="text-align:center;font-size:.75rem;color:var(--cyan);margin-bottom:16px"></div>
+
+    <!-- Attempts -->
+    <div style="text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:12px">
+      Versuch <span id="quoteCntNum">0</span> / <span id="quoteCntMax">5</span>
+      <span id="quoteCntLeft" style="margin-left:8px"></span>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap" style="margin-bottom:12px">
+      <input id="quoteSearchInp" class="search-inp" type="text" placeholder="Charakter eingeben..." autocomplete="off" oninput="onQuoteSearch()">
+      <button class="search-btn" onclick="submitQuoteGuess()">→</button>
+      <div id="quoteSuggestions" class="suggestions"></div>
+    </div>
+
+    <!-- Guesses -->
+    <div id="quoteGuesses" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+
+    <!-- Result banner -->
+    <div id="quoteWinBanner" style="display:none;background:linear-gradient(135deg,rgba(29,185,84,.2),rgba(0,229,255,.1));border:1px solid var(--correct);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:1.1rem;font-weight:700;color:var(--correct)">🎉 Richtig!</div>
+      <div id="quoteWinText" style="font-size:.85rem;color:var(--text);margin-top:4px"></div>
+    </div>
+    <div id="quoteLoseBanner" style="display:none;background:rgba(255,82,82,.1);border:1px solid var(--wrong);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:.9rem;font-weight:700;color:var(--wrong)">❌ Nicht erraten</div>
+      <div id="quoteLoseText" style="font-size:.85rem;color:var(--text);margin-top:4px"></div>
+    </div>
+
+    <!-- New quote button -->
+    <button id="quoteNewBtn" onclick="newQuoteGame()" class="btn-primary" style="width:100%;display:none">🔄 Neues Zitat</button>
   </div>
 </div>
 
@@ -2406,6 +2456,155 @@ function toast(msg){
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 loadLb(); // load lb for name screen preview
+
+// ── QUOTE MODE ────────────────────────────────────────────────────────────────
+let quoteTarget = null, quoteGuesses = [], quoteWon = false, quoteLost = false;
+let quoteSelectedChar = null;
+const QUOTE_MAX = 5;
+
+async function generateQuote(char) {
+  const prompt = `Du bist ein Anime-Experte. Generiere ein kurzes, typisches Zitat (1-2 Sätze) von "${char.n}" aus dem Anime "${char.a}".
+Das Zitat soll den Charakter widerspiegeln, aber NICHT den Namen des Charakters oder den Anime-Titel enthalten.
+Antworte NUR mit dem Zitat auf Deutsch, ohne Anführungszeichen, ohne Erklärung.`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 150,
+        messages: [{role: 'user', content: prompt}]
+      })
+    });
+    const d = await r.json();
+    return d.content?.[0]?.text?.trim() || '...';
+  } catch(e) {
+    return 'Zitat konnte nicht geladen werden.';
+  }
+}
+
+async function joinQuoteGame() {
+  const name = document.getElementById('nameInp').value.trim();
+  if(!name) {
+    document.getElementById('nameErr').textContent = 'Bitte gib einen Namen ein!';
+    document.getElementById('nameErr').style.display = 'block';
+    return;
+  }
+  document.getElementById('nameErr').style.display = 'none';
+  playerName = name;
+  showScreen('quoteScreen');
+  await newQuoteGame();
+}
+
+async function newQuoteGame() {
+  quoteTarget = C[Math.floor(Math.random() * C.length)];
+  quoteGuesses = [];
+  quoteWon = false;
+  quoteLost = false;
+  quoteSelectedChar = null;
+
+  document.getElementById('quoteGuesses').innerHTML = '';
+  document.getElementById('quoteSearchInp').value = '';
+  document.getElementById('quoteSuggestions').innerHTML = '';
+  document.getElementById('quoteWinBanner').style.display = 'none';
+  document.getElementById('quoteLoseBanner').style.display = 'none';
+  document.getElementById('quoteNewBtn').style.display = 'none';
+  document.getElementById('quoteSearchInp').disabled = false;
+  document.getElementById('quoteAnime').textContent = '';
+  document.getElementById('quoteCntNum').textContent = '0';
+  document.getElementById('quoteCntMax').textContent = QUOTE_MAX;
+  document.getElementById('quoteCntLeft').textContent = '';
+
+  document.getElementById('quoteText').innerHTML = '<div style="color:var(--muted);font-size:.85rem">⏳ Generiere Zitat...</div>';
+
+  const quote = await generateQuote(quoteTarget);
+  document.getElementById('quoteText').textContent = '„' + quote + '"';
+}
+
+function onQuoteSearch() {
+  const q = document.getElementById('quoteSearchInp').value.trim().toLowerCase();
+  quoteSelectedChar = null;
+  const box = document.getElementById('quoteSuggestions');
+  if(!q) { box.innerHTML = ''; box.classList.remove('open'); return; }
+
+  const already = new Set(quoteGuesses.map(g => g.n + '|' + g.a));
+  const matches = C.filter(ch => ch.n.toLowerCase().includes(q) && !already.has(ch.n+'|'+ch.a)).slice(0, 15);
+
+  if(!matches.length) { box.innerHTML = ''; box.classList.remove('open'); return; }
+
+  box.innerHTML = matches.map(ch => {
+    const sn = ch.n.replace(/\/g,'\\').replace(/'/g,"\'");
+    const sa = ch.a.replace(/\/g,'\\').replace(/'/g,"\'");
+    return `<div class="sug-item" onclick="selectQuoteChar('${sn}','${sa}')">
+      <span class="sug-emoji">${ch.e}</span>
+      <div><div class="sug-name">${ch.n}</div><div class="sug-anime">${ch.a}</div></div>
+    </div>`;
+  }).join('');
+  box.classList.add('open');
+}
+
+function selectQuoteChar(name, anime) {
+  quoteSelectedChar = C.find(c => c.n === name && c.a === anime);
+  document.getElementById('quoteSearchInp').value = name;
+  document.getElementById('quoteSuggestions').innerHTML = '';
+  document.getElementById('quoteSuggestions').classList.remove('open');
+}
+
+function submitQuoteGuess() {
+  if(quoteWon || quoteLost) return;
+  const char = quoteSelectedChar;
+  if(!char) return;
+
+  quoteGuesses.push(char);
+  quoteSelectedChar = null;
+  document.getElementById('quoteSearchInp').value = '';
+
+  const correct = char.n === quoteTarget.n && char.a === quoteTarget.a;
+
+  // Render guess row
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--card);border:1px solid ' + (correct ? 'var(--correct)' : 'var(--wrong)');
+  row.innerHTML = `<span style="font-size:1rem">${char.e}</span>
+    <div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--text)">${char.n}</div>
+    <div style="font-size:.72rem;color:var(--muted)">${char.a}</div></div>
+    <span style="font-size:1rem">${correct ? '✅' : '❌'}</span>`;
+  document.getElementById('quoteGuesses').prepend(row);
+
+  // Update counter
+  document.getElementById('quoteCntNum').textContent = quoteGuesses.length;
+  const left = QUOTE_MAX - quoteGuesses.length;
+  if(quoteGuesses.length > 0) {
+    document.getElementById('quoteCntLeft').textContent = left + ' übrig';
+  }
+
+  // Hint: reveal anime after 3 wrong guesses
+  if(quoteGuesses.length === 3 && !correct) {
+    document.getElementById('quoteAnime').textContent = '💡 Tipp: ' + quoteTarget.a;
+  }
+
+  if(correct) {
+    quoteWon = true;
+    document.getElementById('quoteWinBanner').style.display = 'block';
+    document.getElementById('quoteWinText').textContent = quoteTarget.e + ' ' + quoteTarget.n + ' aus ' + quoteTarget.a + ' — erraten in ' + quoteGuesses.length + ' Versuch' + (quoteGuesses.length===1?'':'en') + '!';
+    document.getElementById('quoteSearchInp').disabled = true;
+    document.getElementById('quoteNewBtn').style.display = 'block';
+  } else if(quoteGuesses.length >= QUOTE_MAX) {
+    quoteLost = true;
+    document.getElementById('quoteLoseBanner').style.display = 'block';
+    document.getElementById('quoteLoseText').textContent = 'Es war: ' + quoteTarget.e + ' ' + quoteTarget.n + ' aus ' + quoteTarget.a;
+    document.getElementById('quoteSearchInp').disabled = true;
+    document.getElementById('quoteNewBtn').style.display = 'block';
+  }
+}
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('#quoteSuggestions') && !e.target.closest('#quoteSearchInp')) {
+    const box = document.getElementById('quoteSuggestions');
+    if(box) { box.innerHTML = ''; box.classList.remove('open'); }
+  }
+});
+
 </script>
 </body>
 </html>
