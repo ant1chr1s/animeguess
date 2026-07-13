@@ -2063,7 +2063,7 @@ function onSearch(){
   selectedChar=null;
   const box = document.getElementById('suggestions');
   if(!q){box.innerHTML='';box.classList.remove('open');return;}
-  const already=new Set(guesses.map(g=>g.n));
+  const already=new Set(guesses.map(g=>g.n+'|'+g.a));
 
   // Anime-Titel-Suche: passt Query auf einen Anime?
   const allAnimes=[...new Set(C.map(c=>c.a))];
@@ -2072,9 +2072,9 @@ function onSearch(){
 
   let matches;
   if(isAnimeSearch){
-    matches=C.filter(c=>matchingAnimes.includes(c.a)&&!already.has(c.n)).slice(0,20);
+    matches=C.filter(c=>matchingAnimes.includes(c.a)&&!already.has(c.n+'|'+c.a)).slice(0,20);
   } else {
-    matches=C.filter(c=>c.n.toLowerCase().includes(q)&&!already.has(c.n)).slice(0,20);
+    matches=C.filter(c=>c.n.toLowerCase().includes(q)&&!already.has(c.n+'|'+c.a)).slice(0,20);
   }
 
   if(matches.length===0){box.innerHTML='';box.classList.remove('open');return;}
@@ -2087,7 +2087,8 @@ function onSearch(){
       html+=`<div style="padding:5px 13px 3px;font-size:.65rem;color:var(--cyan);font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(0,229,255,.05);border-bottom:1px solid var(--border)">${anime}</div>`;
       chars.forEach(ch=>{
         const safeName=ch.n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        html+=`<div class="sug-item" onclick="selectChar('${safeName}')">
+        const safeAnime=ch.a.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        html+=`<div class="sug-item" onclick="selectChar('${safeName}','${safeAnime}')">
           <span class="sug-emoji">${ch.e}</span>
           <div><div class="sug-name">${ch.n}</div><div class="sug-anime">${ch.a}</div></div>
         </div>`;
@@ -2096,7 +2097,8 @@ function onSearch(){
   } else {
     html=matches.map(ch=>{
       const safeName=ch.n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      return `<div class="sug-item" onclick="selectChar('${safeName}')">
+      const safeAnime=ch.a.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<div class="sug-item" onclick="selectChar('${safeName}','${safeAnime}')">
         <span class="sug-emoji">${ch.e}</span>
         <div><div class="sug-name">${ch.n}</div><div class="sug-anime">${ch.a}</div></div>
       </div>`;
@@ -2106,8 +2108,12 @@ function onSearch(){
   box.classList.add('open');
 }
 
-function selectChar(name){
-  selectedChar=C.find(c=>c.n===name);
+function selectChar(name, anime){
+  if(anime){
+    selectedChar=C.find(c=>c.n===name&&c.a===anime);
+  } else {
+    selectedChar=C.find(c=>c.n===name);
+  }
   document.getElementById('searchInp').value=name;
   document.getElementById('suggestions').innerHTML='';
   document.getElementById('suggestions').classList.remove('open');
