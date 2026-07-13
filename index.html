@@ -2470,7 +2470,10 @@ Antworte NUR mit dem Zitat auf Deutsch, ohne Anführungszeichen, ohne Erklärung
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 150,
@@ -2599,9 +2602,12 @@ function submitQuoteGuess() {
 }
 
 document.addEventListener('click', e => {
-  if(!e.target.closest('#quoteSuggestions') && !e.target.closest('#quoteSearchInp')) {
-    const box = document.getElementById('quoteSuggestions');
-    if(box) { box.innerHTML = ''; box.classList.remove('open'); }
+  const quoteScreen = document.getElementById('quoteScreen');
+  if(quoteScreen && quoteScreen.classList.contains('active')) {
+    if(!e.target.closest('#quoteSuggestions') && !e.target.closest('#quoteSearchInp')) {
+      const box = document.getElementById('quoteSuggestions');
+      if(box) { box.innerHTML = ''; box.classList.remove('open'); }
+    }
   }
 });
 
