@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.5</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.6</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -243,7 +243,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     </div>
     <div id="quoteAnime" style="text-align:center;font-size:.75rem;color:var(--cyan);margin-bottom:12px"></div>
     <div style="text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:12px">
-      Versuch <span id="quoteCntNum">0</span> / 5
+      Versuch <span id="quoteCntNum">0</span> / 7
       <span id="quoteCntLeft" style="margin-left:8px"></span>
     </div>
     <div class="search-wrap" style="margin-bottom:12px">
@@ -269,7 +269,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.5</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.6</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -2449,7 +2449,7 @@ loadLb(); // load lb for name screen preview
 
 // ── QUOTE MODE ────────────────────────────────────────────────────────────────
 let quoteTarget = null, quoteGuesses = [], quoteWon = false, quoteLost = false, quoteSelectedChar = null;
-const QUOTE_MAX = 5;
+const QUOTE_MAX = 7;
 
 async function generateQuote(char) {
   try {
@@ -2543,17 +2543,21 @@ function submitQuoteGuess() {
   quoteSelectedChar = null;
   document.getElementById('quoteSearchInp').value = '';
   var correct = char.n === quoteTarget.n && char.a === quoteTarget.a;
+  var animeMatch = !correct && char.a === quoteTarget.a;
+  var borderColor = correct ? 'var(--correct)' : animeMatch ? 'var(--partial)' : 'var(--wrong)';
+  var bgColor = correct ? 'rgba(29,185,84,.1)' : animeMatch ? 'rgba(255,183,77,.08)' : 'var(--card)';
+  var icon = correct ? '✅' : animeMatch ? '🟡' : '❌';
   var row = document.createElement('div');
-  row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--card);border:1px solid ' + (correct ? 'var(--correct)' : 'var(--wrong)');
+  row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:' + bgColor + ';border:1px solid ' + borderColor;
   row.innerHTML = '<span>' + char.e + '</span>'
     + '<div style="flex:1"><div style="font-size:.85rem;font-weight:600">' + char.n + '</div>'
     + '<div style="font-size:.72rem;color:var(--muted)">' + char.a + '</div></div>'
-    + '<span>' + (correct ? '✅' : '❌') + '</span>';
+    + '<span>' + icon + '</span>';
   document.getElementById('quoteGuesses').prepend(row);
   document.getElementById('quoteCntNum').textContent = quoteGuesses.length;
   var left = QUOTE_MAX - quoteGuesses.length;
   if(left > 0) document.getElementById('quoteCntLeft').textContent = left + ' übrig';
-  if(quoteGuesses.length === 3 && !correct) {
+  if(quoteGuesses.length === 5 && !correct) {
     document.getElementById('quoteAnime').textContent = '💡 Tipp: ' + quoteTarget.a;
   }
   if(correct) {
