@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.3</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.4</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -269,7 +269,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.3</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.4</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -2453,20 +2453,20 @@ const QUOTE_MAX = 5;
 
 async function generateQuote(char) {
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Authorization': 'Bearer ' + ['kVrg','BKJF','hxYB','Bkto','Wbpd','Mvl3','kPxQ','wJOt'].join('')
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'mistral-small-latest',
         max_tokens: 150,
-        messages: [{role: 'user', content: 'Generiere ein kurzes, typisches Zitat (1-2 Sätze) von "' + char.n + '" aus dem Anime "' + char.a + '". Das Zitat soll den Charakter widerspiegeln, aber NICHT den Namen oder den Anime-Titel enthalten. Antworte NUR mit dem Zitat auf Deutsch.'}]
+        messages: [{role: 'user', content: 'Generiere ein kurzes, typisches Zitat (1-2 Sätze) von "' + char.n + '" aus dem Anime "' + char.a + '". Das Zitat soll den Charakter widerspiegeln, aber NICHT den Namen oder den Anime-Titel enthalten. Antworte NUR mit dem Zitat auf Deutsch, ohne Anführungszeichen.'}]
       })
     });
     const d = await r.json();
-    return d.content && d.content[0] ? d.content[0].text.trim() : 'Zitat konnte nicht geladen werden.';
+    return d.choices && d.choices[0] ? d.choices[0].message.content.trim() : 'Zitat konnte nicht geladen werden.';
   } catch(e) {
     return 'Zitat konnte nicht geladen werden.';
   }
