@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.6</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.7</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -269,7 +269,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.6</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.7</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -414,8 +414,15 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
       <div class="modal-title">📋 ANIME IM SPIEL</div>
       <button class="modal-close" onclick="toggleAnimeList()">✕</button>
     </div>
+    <div style="padding:8px 14px 4px">
+      <input id="animeSearchInp" class="search-inp" type="text" placeholder="🔍 Anime oder Charakter suchen..." autocomplete="off" oninput="filterAnimeList()" style="width:100%;box-sizing:border-box;font-size:.85rem">
+    </div>
     <div class="modal-body">
       <div class="anime-grid" id="animeGrid"></div>
+      <div id="charListPanel" style="display:none;padding:4px 0">
+        <button onclick="backToAnimeList()" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:.82rem;padding:0 0 10px 2px">← Zurück</button>
+        <div id="charListContent"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1586,7 +1593,7 @@ function buildAnimeList(){
     'Kaiju No. 8':'🦟','Re:Zero':'🔄','Tokyo Revengers':'🐉','Kingdom Hearts':'🗝️'
   };
   document.getElementById('animeGrid').innerHTML=sorted.map(([name,count])=>`
-    <div class="anime-item">
+    <div class="anime-item" onclick="showAnimeChars(this.querySelector('.anime-name').textContent)" style="cursor:pointer">
       <span class="anime-emoji">${animeEmojis[name]||'🎌'}</span>
       <div class="anime-info">
         <div class="anime-name">${name}</div>
@@ -2575,6 +2582,42 @@ function submitQuoteGuess() {
   }
 }
 
+
+function filterAnimeList(){
+  var q=document.getElementById('animeSearchInp').value.trim().toLowerCase();
+  if(!q){
+    document.querySelectorAll('#animeGrid .anime-item').forEach(function(el){el.style.display='';});
+    return;
+  }
+  document.querySelectorAll('#animeGrid .anime-item').forEach(function(el){
+    var name=el.querySelector('.anime-name').textContent.toLowerCase();
+    el.style.display=name.includes(q)?'':'none';
+  });
+}
+
+function showAnimeChars(animeName){
+  document.getElementById('animeGrid').style.display='none';
+  document.getElementById('charListPanel').style.display='block';
+  var chars=C.filter(function(ch){return ch.a===animeName;}).sort(function(a,b){return a.n.localeCompare(b.n);});
+  var html='<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">'+animeName+' · '+chars.length+' Charaktere</div>';
+  for(var i=0;i<chars.length;i++){
+    var ch=chars[i];
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:1rem;width:24px;text-align:center">'+ch.e+'</span>'
+      +'<div><div style="font-size:.85rem;font-weight:600;color:var(--text)">'+ch.n+'</div>'
+      +'<div style="font-size:.68rem;color:var(--muted)">'+ch.rk+' · '+ch.f+'</div></div>'
+      +'</div>';
+  }
+  document.getElementById('charListContent').innerHTML=html;
+}
+
+function backToAnimeList(){
+  document.getElementById('animeGrid').style.display='';
+  document.getElementById('charListPanel').style.display='none';
+  var inp=document.getElementById('animeSearchInp');
+  if(inp) inp.value='';
+  document.querySelectorAll('#animeGrid .anime-item').forEach(function(el){el.style.display='';});
+}
 </script>
 </body>
 </html>
