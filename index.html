@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.0</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.1</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -270,7 +270,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.0</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.1</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -2548,7 +2548,13 @@ function selectQuoteChar(name, anime) {
 function submitQuoteGuess() {
   if(quoteWon || quoteLost) return;
   var char = quoteSelectedChar;
-  if(!char) return;
+  if(!char) {
+    var val = document.getElementById('quoteSearchInp').value.trim().toLowerCase();
+    if(!val) return;
+    char = C.find(function(ch){ return ch.n.toLowerCase()===val; })
+         || C.find(function(ch){ return ch.n.toLowerCase().includes(val); });
+    if(!char) return;
+  }
   quoteGuesses.push(char);
   quoteSelectedChar = null;
   document.getElementById('quoteSearchInp').value = '';
