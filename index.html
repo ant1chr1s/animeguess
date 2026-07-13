@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.8</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.0.9</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -241,6 +241,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
         <div style="color:var(--muted);font-size:.85rem">Lade Zitat...</div>
       </div>
     </div>
+    <div id="quoteGenre" style="text-align:center;font-size:.75rem;color:var(--muted);margin-bottom:4px"></div>
     <div id="quoteAnime" style="text-align:center;font-size:.75rem;color:var(--cyan);margin-bottom:12px"></div>
     <div style="text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:12px">
       Versuch <span id="quoteCntNum">0</span> / 7
@@ -269,7 +270,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.8</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.0.9</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -2506,6 +2507,7 @@ async function newQuoteGame() {
   document.getElementById('quoteNewBtn').style.display = 'none';
   document.getElementById('quoteSearchInp').disabled = false;
   document.getElementById('quoteAnime').textContent = '';
+  document.getElementById('quoteGenre').textContent = '🎭 Genre: ' + quoteTarget.g;
   document.getElementById('quoteCntNum').textContent = '0';
   document.getElementById('quoteCntLeft').textContent = '';
   document.getElementById('quoteText').innerHTML = '<div style="color:var(--muted);font-size:.85rem">Generiere Zitat...</div>';
