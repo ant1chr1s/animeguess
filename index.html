@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.4</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.5</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -236,6 +236,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
       <button class="btn-icon" onclick="showScreen('nameScreen')" style="font-size:1.1rem">←</button>
       <div style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);flex:1">💬 Wer hat es gesagt? <span style="font-size:.75rem;color:var(--muted);font-weight:400">(Beta)</span></div>
       <button class="btn-icon" onclick="openAnimeListForQuote()" title="Anime-Liste">📋</button>
+      <button class="btn-icon" onclick="toggleQuoteLb()">🏆</button>
     </div>
     <div id="quoteBox" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;min-height:120px;display:flex;align-items:center;justify-content:center">
       <div id="quoteText" style="font-size:1.1rem;line-height:1.6;color:var(--text);font-style:italic;text-align:center">
@@ -263,6 +264,14 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
       <div id="quoteLoseText" style="font-size:.85rem;color:var(--text);margin-top:4px"></div>
     </div>
     <button id="quoteNewBtn" onclick="newQuoteGame()" class="btn-primary" style="width:100%;display:none">🔄 Neues Zitat</button>
+    <!-- Quote LB Panel -->
+    <div id="quoteLbPanel" class="lb-panel" style="margin-top:12px">
+      <div class="lb-panel-header">
+        <div class="lb-panel-title">🏆 ZITAT-LEADERBOARD</div>
+        <button class="btn-refresh" onclick="loadQuoteLb(true)">↻</button>
+      </div>
+      <div id="quoteLbRows"><div style="color:var(--muted);text-align:center;font-size:.8rem;padding:12px">Lädt...</div></div>
+    </div>
   </div>
 </div>
 
@@ -271,7 +280,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.4</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.5</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -2588,12 +2597,14 @@ function submitQuoteGuess() {
     quoteWon = true;
     document.getElementById('quoteWinBanner').style.display = 'block';
     document.getElementById('quoteWinText').textContent = quoteTarget.e + ' ' + quoteTarget.n + ' aus ' + quoteTarget.a + ' — erraten in ' + quoteGuesses.length + ' Versuch' + (quoteGuesses.length===1?'':'en') + '!';
+    recordQuoteResult(true);
     document.getElementById('quoteSearchInp').disabled = true;
     document.getElementById('quoteNewBtn').style.display = 'block';
   } else if(quoteGuesses.length >= QUOTE_MAX) {
     quoteLost = true;
     document.getElementById('quoteLoseBanner').style.display = 'block';
     document.getElementById('quoteLoseText').textContent = 'Es war: ' + quoteTarget.e + ' ' + quoteTarget.n + ' aus ' + quoteTarget.a;
+    recordQuoteResult(false);
     document.getElementById('quoteSearchInp').disabled = true;
     document.getElementById('quoteNewBtn').style.display = 'block';
   }
@@ -2654,6 +2665,87 @@ function openAnimeListForQuote(){
     if(inp) inp.value = quoteTarget.g;
   }
   document.getElementById('animeModal').classList.add('open');
+}
+
+
+// ── QUOTE LEADERBOARD ─────────────────────────────────────────────────────────
+var quoteLbData = {}, quoteLbSha2 = '';
+var QUOTE_LB_FILE = 'leaderboard-quote.json';
+
+function toggleQuoteLb(){
+  var p = document.getElementById('quoteLbPanel');
+  if(p.classList.contains('open')){
+    p.classList.remove('open');
+  } else {
+    p.classList.add('open');
+    loadQuoteLb(false);
+  }
+}
+
+async function loadQuoteLb(showToast){
+  try {
+    var r = await fetch('https://api.github.com/repos/'+GITHUB_REPO+'/contents/'+QUOTE_LB_FILE, {
+      headers:{'Authorization':'token '+GITHUB_TOKEN,'Accept':'application/vnd.github.v3+json'}
+    });
+    var d = await r.json();
+    quoteLbSha2 = d.sha;
+    quoteLbData = JSON.parse(atob(d.content.replace(/\n/g,''))).leaderboard || {};
+    renderQuoteLb();
+    if(showToast) toast('Leaderboard aktualisiert!');
+  } catch(e){ quoteLbData={}; renderQuoteLb(); }
+}
+
+async function saveQuoteLb(){
+  try {
+    var content = btoa(unescape(encodeURIComponent(JSON.stringify({leaderboard:quoteLbData}))));
+    var r = await fetch('https://api.github.com/repos/'+GITHUB_REPO+'/contents/'+QUOTE_LB_FILE,{
+      method:'PUT',
+      headers:{'Authorization':'token '+GITHUB_TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'update quote leaderboard',content:content,sha:quoteLbSha2})
+    });
+    var d = await r.json();
+    if(d.content) quoteLbSha2 = d.content.sha;
+  } catch(e){ console.error('Quote LB save error',e); }
+}
+
+function recordQuoteResult(didWin){
+  loadQuoteLb(false).then(function(){
+    var prev = quoteLbData[playerName] || {wins:0,losses:0,streak:0,bestStreak:0};
+    var newStreak = didWin ? prev.streak+1 : 0;
+    quoteLbData[playerName] = {
+      wins: prev.wins + (didWin?1:0),
+      losses: prev.losses + (didWin?0:1),
+      streak: newStreak,
+      bestStreak: Math.max(prev.bestStreak||0, newStreak)
+    };
+    saveQuoteLb().then(function(){ renderQuoteLb(); });
+  });
+}
+
+function renderQuoteLb(){
+  var medals = ['🥇','🥈','🥉'];
+  var rows = Object.entries(quoteLbData).sort(function(a,b){
+    return b[1].wins - a[1].wins || b[1].streak - a[1].streak;
+  });
+  if(rows.length===0){
+    document.getElementById('quoteLbRows').innerHTML = '<div style="color:var(--muted);text-align:center;font-size:.8rem;padding:8px">Noch keine Einträge</div>';
+    return;
+  }
+  document.getElementById('quoteLbRows').innerHTML = rows.map(function(entry, i){
+    var name = entry[0], s = entry[1];
+    var isMe = name === playerName;
+    return '<div class="lb-entry '+(isMe?'me':')+'">'
+      +'<div class="lb-entry-left">'
+      +'<span class="lb-entry-rank">'+(medals[i]||(i+1)+'.')+'</span>'
+      +'<span class="lb-entry-name '+(isMe?'me':'')+'">'+name+'</span>'
+      +'</div>'
+      +'<div class="lb-entry-right">'
+      +'<span style="color:var(--correct)">'+s.wins+'W</span>'
+      +'<span style="color:var(--wrong)">'+s.losses+'L</span>'
+      +'<span>🔥'+s.bestStreak+'</span>'
+      +'</div>'
+      +'</div>';
+  }).join('');
 }
 
 </script>
