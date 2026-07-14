@@ -2733,7 +2733,7 @@ function renderQuoteLb(){
   for(var i=0;i<rows.length;i++){
     var name=rows[i][0],s=rows[i][1];
     var me=(name===playerName);
-    html+='<div class="lb-entry'+(me?' me':')+'">'
+    html+='<div class="lb-entry'+(me?' me':'')+'">'
       +'<div class="lb-entry-left">'
       +'<span class="lb-entry-rank">'+(medals[i]||(i+1)+'.')+'</span>'
       +'<span class="lb-entry-name'+(me?' me':'')+'">'+ name+'</span>'
