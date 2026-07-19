@@ -2192,9 +2192,9 @@ function onSearch(){
 
   let matches;
   if(isAnimeSearch){
-    matches=C.filter(c=>matchingAnimes.includes(c.a)&&!already.has(c.n+'|'+c.a)).slice(0,20);
+    matches=C.filter(c=>matchingAnimes.includes(c.a)&&!already.has(c.n+'|'+c.a)).slice(0,60);
   } else {
-    matches=C.filter(c=>c.n.toLowerCase().includes(q)&&!already.has(c.n+'|'+c.a)).slice(0,20);
+    matches=C.filter(c=>c.n.toLowerCase().includes(q)&&!already.has(c.n+'|'+c.a)).slice(0,60);
   }
 
   if(matches.length===0){box.innerHTML='';box.classList.remove('open');return;}
