@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.6</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.7</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -279,7 +279,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.6</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.7</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -1671,7 +1671,7 @@ function updateKnownRow(){
 // ── DAILY PROGRESS PERSISTENCE ───────────────────────────────────────────────
 function saveDailyProgress(){
   if(gameMode!=='daily') return;
-  const progressKey='daily_progress_'+getDailyDateStr();
+  const progressKey='ag_daily_progress_'+getDailyDateStr();
   // Save full guess objects (only fields needed for re-rendering)
   const savedGuesses=guesses.filter(g=>!g._hint).map(g=>({
     n:g.n,e:g.e,a:g.a,g:g.g,s:g.s,h:g.h,ra:g.ra,f:g.f,rk:g.rk,ab:g.ab,ha:g.ha,st:g.st
@@ -1684,7 +1684,7 @@ function saveDailyProgress(){
 }
 
 function clearDailyProgress(){
-  localStorage.removeItem('daily_progress_'+getDailyDateStr());
+  localStorage.removeItem('ag_daily_progress_'+getDailyDateStr());
 }
 
 // ── GITHUB LEADERBOARD API ────────────────────────────────────────────────────
@@ -1721,7 +1721,7 @@ function getStats(name) {
 async function recordResult(didWin, attempts) {
   if(gameMode==='daily'){
     // Save to localStorage so user can't replay today
-    const todayKey = 'daily_played_' + getDailyDateStr();
+    const todayKey = 'ag_daily_played_' + getDailyDateStr();
     localStorage.setItem(todayKey, JSON.stringify({won:didWin, attempts, gave_up:!didWin}));
     clearDailyProgress();
     // Save to daily leaderboard
@@ -1865,7 +1865,7 @@ function renderDailyLb() {
 
   // Character reveal logic
   const char = getDailyCharForDate(dateStr);
-  const todayKey = 'daily_played_' + dateStr;
+  const todayKey = 'ag_daily_played_' + dateStr;
   const alreadyPlayed = localStorage.getItem(todayKey);
   const isPast = dateStr < today;
   const showChar = alreadyPlayed || isPast;
@@ -2070,7 +2070,7 @@ function newGame(){
   if(gameMode==='daily'){
     target = getDailyChar();
     // Check if already played today
-    const todayKey = 'daily_played_' + getDailyDateStr();
+    const todayKey = 'ag_daily_played_' + getDailyDateStr();
     const alreadyPlayed = localStorage.getItem(todayKey);
     if(alreadyPlayed){
       const d=JSON.parse(alreadyPlayed);
@@ -2113,7 +2113,7 @@ function newGame(){
   document.getElementById('giveUpBtn').style.display='none';
   // Restore daily progress if exists
   if(gameMode==='daily'){
-    const progressKey='daily_progress_'+getDailyDateStr();
+    const progressKey='ag_daily_progress_'+getDailyDateStr();
     const saved=localStorage.getItem(progressKey);
     if(saved){
       try{
@@ -2132,7 +2132,7 @@ function newGame(){
             <span class="hint-item"><span class="hint-cat">${COL_NAMES[idx]}: </span><b>${cellText(COL_KEYS[idx],target[COL_KEYS[idx]])}</b></span>
           `).join('');
         }
-      }catch(e){ localStorage.removeItem('daily_progress_'+getDailyDateStr()); }
+      }catch(e){ localStorage.removeItem('ag_daily_progress_'+getDailyDateStr()); }
     }
   }
   updateCounter();
