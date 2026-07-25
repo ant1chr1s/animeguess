@@ -199,7 +199,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
     <div class="name-box">
       <div class="logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
       <div class="logo-sub">Multiplayer · Pokédle-Style</div>
-      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.7</div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:2px;letter-spacing:.5px">v2.1.8</div>
       <div class="card">
         <div class="card-title">👤 Wer bist du?</div>
         <input id="nameInp" class="name-inp" type="text" placeholder="Dein Name..." maxlength="20" autocomplete="off">
@@ -279,7 +279,7 @@ header{text-align:center;padding:16px 16px 10px;border-bottom:1px solid var(--bo
   <header>
     <div class="header-logo">Anime/Manga<span style="font-weight:400"> Guess</span></div>
     <div class="header-sub" id="headerSub">Pokédle-Style · Multiplayer</div>
-      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.7</div>
+      <div style="font-size:.55rem;color:var(--muted);opacity:.6">v2.1.8</div>
     <div class="header-btns">
       <button class="btn-icon" onclick="toggleAnimeList()" title="Anime-Liste">📋</button>
       <button class="btn-icon" id="dailyLbBtn" onclick="toggleDailyLb()" style="display:none">📅</button>
@@ -2021,6 +2021,7 @@ function joinGame(mode='endless', diff='easy'){
   if(name.length>20){err.textContent='Max. 20 Zeichen!';err.style.display='block';return;}
   err.style.display='none';
   playerName=name;
+  localStorage.setItem('ag_player_name', name);
   gameMode=mode;
   difficulty=mode==='daily'?'normal':diff;
   // Apply difficulty settings
@@ -2468,6 +2469,9 @@ function toast(msg){
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 loadLb(); // load lb for name screen preview
+// Restore saved player name
+var savedName = localStorage.getItem('ag_player_name');
+if(savedName) document.getElementById('nameInp').value = savedName;
 
 // ── QUOTE MODE ────────────────────────────────────────────────────────────────
 let quoteTarget = null, quoteGuesses = [], quoteWon = false, quoteLost = false, quoteSelectedChar = null;
