@@ -2841,6 +2841,21 @@ function renderDailyHof(){
   document.getElementById('dailyHofRows').innerHTML = html;
 }
 
+
+function selectCharFromList(name, anime){
+  // Close the modal
+  document.getElementById('animeModal').classList.remove('open');
+  backToAnimeList();
+  // Select the character
+  selectChar(name, anime);
+  // Put name in search field and show suggestion
+  var inp = document.getElementById('searchInp');
+  if(inp){
+    inp.value = name;
+    inp.focus();
+  }
+}
+
 </script>
 </body>
 </html>
