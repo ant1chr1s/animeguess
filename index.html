@@ -2638,10 +2638,12 @@ function showAnimeChars(animeName){
   var html='<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">'+animeName+' · '+chars.length+' Charaktere</div>';
   for(var i=0;i<chars.length;i++){
     var ch=chars[i];
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">'
+    var cn=ch.n.replace(/'/g,"\\'"),ca=ch.a.replace(/'/g,"\\'");
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectCharFromList(\''+cn+'\',\''+ca+'\')">'
       +'<span style="font-size:1rem;width:24px;text-align:center">'+ch.e+'</span>'
-      +'<div><div style="font-size:.85rem;font-weight:600;color:var(--text)">'+ch.n+'</div>'
+      +'<div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--text)">'+ch.n+'</div>'
       +'<div style="font-size:.68rem;color:var(--muted)">'+ch.rk+' · '+ch.f+'</div></div>'
+      +'<span style="font-size:.75rem;color:var(--cyan)">→</span>'
       +'</div>';
   }
   document.getElementById('charListContent').innerHTML=html;
